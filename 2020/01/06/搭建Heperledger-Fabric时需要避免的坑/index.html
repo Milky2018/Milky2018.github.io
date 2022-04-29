@@ -1,37 +1,711 @@
-{% extends '_layout.swig' %}
-{% import '_macro/post.swig' as post_template %}
-{% import '_macro/sidebar.swig' as sidebar_template %}
+<!DOCTYPE html>
 
 
-{% block title %}{{ page.title }} | {{ config.title }}{% endblock %}
 
-{% block page_class %}page-post-detail{% endblock %}
+  
 
 
-{% block content %}
+<html class="theme-next muse use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="最近了解了区块链方面的知识，在尝试在自己的电脑上搭建 Hyperledger Fabric 时遇见了几个坑。自己踩过了，给各位提个醒，希望大家能少走点弯路。 git clone 速度慢导致失败如果你 git clone 国外资源时速度只有 10kB&#x2F;s 左右，那么很容易 clone 到一半就发生异常然后中止。可能的情况有很多，比如，如果你遇见了这种 Error： 1git error:">
+<meta property="og:type" content="article">
+<meta property="og:title" content="搭建Heperledger Fabric时需要避免的坑">
+<meta property="og:url" content="http://yoursite.com/2020/01/06/%E6%90%AD%E5%BB%BAHeperledger-Fabric%E6%97%B6%E9%9C%80%E8%A6%81%E9%81%BF%E5%85%8D%E7%9A%84%E5%9D%91/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="最近了解了区块链方面的知识，在尝试在自己的电脑上搭建 Hyperledger Fabric 时遇见了几个坑。自己踩过了，给各位提个醒，希望大家能少走点弯路。 git clone 速度慢导致失败如果你 git clone 国外资源时速度只有 10kB&#x2F;s 左右，那么很容易 clone 到一半就发生异常然后中止。可能的情况有很多，比如，如果你遇见了这种 Error： 1git error:">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-01-06T02:18:32.000Z">
+<meta property="article:modified_time" content="2020-03-25T04:20:56.375Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2020/01/06/搭建Heperledger-Fabric时需要避免的坑/"/>
+
+
+
+
+
+  <title>搭建Heperledger Fabric时需要避免的坑 | Hexo</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Hexo</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/%20" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
 
   <div id="posts" class="posts-expand">
-    {{ post_template.render(page) }}
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/06/%E6%90%AD%E5%BB%BAHeperledger-Fabric%E6%97%B6%E9%9C%80%E8%A6%81%E9%81%BF%E5%85%8D%E7%9A%84%E5%9D%91/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">搭建Heperledger Fabric时需要避免的坑</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-01-06T10:18:32+08:00">
+                2020-01-06
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>最近了解了区块链方面的知识，在尝试在自己的电脑上搭建 Hyperledger Fabric 时遇见了几个坑。自己踩过了，给各位提个醒，希望大家能少走点弯路。</p>
+<h1 id="git-clone-速度慢导致失败"><a href="#git-clone-速度慢导致失败" class="headerlink" title="git clone 速度慢导致失败"></a>git clone 速度慢导致失败</h1><p>如果你 git clone 国外资源时速度只有 10kB&#x2F;s 左右，那么很容易 clone 到一半就发生异常然后中止。可能的情况有很多，比如，如果你遇见了这种 Error：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git error: RPC failed; curl 56 GnuTLS</span><br></pre></td></tr></table></figure>
+<p>我想 stack overflow 上已经有比较完整的解答：<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/38378914/git-error-rpc-failed-curl-56-gnutls">https://stackoverflow.com/questions/38378914/git-error-rpc-failed-curl-56-gnutls</a></p>
+<p>你或许可以尝试修改 git 的配置信息，比如修改 http 的 postbuffer 大小：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git config --global http.postBuffer 1048576000</span></span><br></pre></td></tr></table></figure>
+<p>不过这个方法往往是用来解决 post 失败的问题的。</p>
+<p>在国内，有科学上网的条件，clone 的速度应当要快得多；要注意的是，如果你已经科学上网了，速度还是很慢，或许你应当检查自己的 http 代理。例如，socks5 的 http 代理设置过程：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git config --global http.proxy <span class="string">&#x27;socks5://127.0.0.1:1080&#x27;</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> git config --global https.proxy <span class="string">&#x27;socks5://127.0.0.1:1080&#x27;</span></span></span><br></pre></td></tr></table></figure>
+<p>如果你没有科学上网的条件，而且服务器在国内，那么你或许可以尝试修改 hosts 文件，手动添加几个 IP 映射，再刷新 DNS 缓存。具体的修改方式这里不多介绍，因为可能的方式太多了，建议亲自尝试增加几个 IP 映射看看效果。</p>
+<p>Windows 的 hosts 文件目录在这里：<code>C:/Windows/system32/drivers/etc/hosts</code></p>
+<p>*nix 的 hosts 文件目录一般在这里：<code>/etc/hosts</code></p>
+<p>Windows DNS 缓存刷新的命令：<code>ipconfig /flushdns</code> </p>
+<p>*nix 命令：<code>sudo systemctl restart nscd</code></p>
+<hr>
+<p>2020.3.23更新</p>
+<p>修改 hosts 文件来手动调整 IP 映射的方式有时不太好用，有不少人在网络上分享了更好用的方法，比如将 github 项目克隆到国内的代码管理仓库再下载。具体操作方式可以参考该视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1aE411p7Cd">https://www.bilibili.com/video/BV1aE411p7Cd</a></p>
+<h1 id="用官方提供的脚本文件不能成功下载binaries"><a href="#用官方提供的脚本文件不能成功下载binaries" class="headerlink" title="用官方提供的脚本文件不能成功下载binaries"></a>用官方提供的脚本文件不能成功下载binaries</h1><p>在搭建区块链网络的初始阶段，需要下载两个 binaries 文件，分别是 hyperledger-fabric 和 hyperledger-fabric-ca，如果不能科学上网，用官方提供的脚本文件几乎是不能正常下载它们的。这时我们需要手动下载。这里有一个 Hyperledger Fabric 资源的镜像网站：<a target="_blank" rel="noopener" href="https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger">https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger</a></p>
+<p>但这个网站的资源不一定能随时更新到最新，比如我写这篇文章时，它的 hyperledger-fabric 文件最新为 1.4.4 版本，hyperledger-fabric-ca 的最新却只更新到 1.4.3 版本。我建议可以从下载二进制文件的脚本中把需要的文件地址 Copy 下来，然后用自己的下载器进行下载（为了成功运行脚本，你需要把脚本中对应的下载的代码删去），我用的是 Motrix。</p>
+<hr>
+<p>2020.3.23更新</p>
+<p>目前 nexus 网站也不能正常访问。官网给出的 bootstrap 脚本地址 <a target="_blank" rel="noopener" href="https://bit.ly/2ysbOFE">https://bit.ly/2ysbOFE</a> 同样不能正常访问，但里面的内容和 <a target="_blank" rel="noopener" href="https://github.com/hyperledger/fabric/blob/master/scripts/bootstrap.sh">https://github.com/hyperledger/fabric/blob/master/scripts/bootstrap.sh</a> 是一样的。想要下载 binaries，可以直接访问 <a target="_blank" rel="noopener" href="https://github.com/hyperledger/fabric/releases/">https://github.com/hyperledger/fabric/releases/</a> 和 <a target="_blank" rel="noopener" href="https://github.com/hyperledger/fabric-ca/releases">https://github.com/hyperledger/fabric-ca/releases</a> ，选择相应的文件进行下载。下载工具同样可以使用你自己喜欢的工具。</p>
+<h1 id="docker拉取镜像速度慢"><a href="#docker拉取镜像速度慢" class="headerlink" title="docker拉取镜像速度慢"></a>docker拉取镜像速度慢</h1><p>Docker 拉取镜像速度慢一般不会导致中止，所以如果你有耐心，可以慢慢等，一般来说一天足够拉取所有需要的镜像了。我以前用的是网易的镜像云，发现速度很慢，现在换了阿里的，稍微快了一些。大家也可以多尝试几个镜像源。</p>
+<p>（本文定价0元）</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>本人的博客供免费阅览，读者如果喜欢的话，可以自愿付款。每篇博文下都会有定价作为付款金额参考。付款金额无下限，有上限。对于定价为 a 元的文章，无论你多么喜欢，请不要支付超过 a*10 元。</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>Donate</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/2019/07/18/博客付款通道/IMG_0141.JPG" alt=" WeChat Pay"/>
+        <p>WeChat Pay</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/2019/07/18/博客付款通道/IMG_0142.JPG" alt=" Alipay"/>
+        <p>Alipay</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2019/08/29/Y-Combinator%E7%AE%80%E4%BB%8B/" rel="next" title="Y-Combinator简介">
+                <i class="fa fa-chevron-left"></i> Y-Combinator简介
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2020/04/06/Subtyping%E7%AE%80%E4%BB%8B/" rel="prev" title="Subtyping简介">
+                Subtyping简介 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
 
     <div class="post-spread">
-      {% if theme.jiathis %}
-        {% include '_partials/share/jiathis.swig' %}
-      {% elseif theme.baidushare %}
-        {% include '_partials/share/baidushare.swig' %}
-      {% elseif theme.add_this_id %}
-        {% include '_partials/share/add-this.swig' %}
-      {% elseif theme.duoshuo_shortname and theme.duoshuo_share %}
-        {% include '_partials/share/duoshuo_share.swig' %}
-      {% endif %}
+      
     </div>
   </div>
 
-{% endblock %}
 
-{% block sidebar %}
-  {{ sidebar_template.render(true) }}
-{% endblock %}
+          </div>
+          
 
-{% block script_extra %}
-  {% include '_scripts/pages/post-details.swig' %}
-{% endblock %}
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%20%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">10</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#git-clone-%E9%80%9F%E5%BA%A6%E6%85%A2%E5%AF%BC%E8%87%B4%E5%A4%B1%E8%B4%A5"><span class="nav-number">1.</span> <span class="nav-text">git clone 速度慢导致失败</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%94%A8%E5%AE%98%E6%96%B9%E6%8F%90%E4%BE%9B%E7%9A%84%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6%E4%B8%8D%E8%83%BD%E6%88%90%E5%8A%9F%E4%B8%8B%E8%BD%BDbinaries"><span class="nav-number">2.</span> <span class="nav-text">用官方提供的脚本文件不能成功下载binaries</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#docker%E6%8B%89%E5%8F%96%E9%95%9C%E5%83%8F%E9%80%9F%E5%BA%A6%E6%85%A2"><span class="nav-number">3.</span> <span class="nav-text">docker拉取镜像速度慢</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">John Doe</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
