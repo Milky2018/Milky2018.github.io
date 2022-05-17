@@ -87,7 +87,7 @@
 <meta property="og:description" content="保尔·格雷厄姆在《书呆子的复仇》一文中为了讨论不同语言编程能力的差别，使用了一个累加器的例子。这部分内容相当有趣，但这篇文章有些年头了。本文会将保尔·格雷厄姆原文的大部分内容重新展示，并结合更新的技术给出更多的例子和自己的一点看法。 玩具：累加器生成函数我们要编写一个函数（或者对象、类，只要能实现我们的需求就行），它接受一个参数 n，然后返回另一个函数，后者接受参数 i，n 在原先的基础上增加 i">
 <meta property="og:locale">
 <meta property="article:published_time" content="2019-08-14T08:17:15.000Z">
-<meta property="article:modified_time" content="2021-10-21T02:01:35.513Z">
+<meta property="article:modified_time" content="2022-05-11T02:46:32.207Z">
 <meta property="article:author" content="John Doe">
 <meta name="twitter:card" content="summary">
 
@@ -355,7 +355,7 @@
 <figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> foo = |<span class="keyword">mut</span> n: <span class="built_in">i32</span>| &#123; <span class="keyword">move</span> |i: <span class="built_in">i32</span>| &#123; n += i; n &#125; &#125;;</span><br></pre></td></tr></table></figure>
 <h1 id="获胜者是？"><a href="#获胜者是？" class="headerlink" title="获胜者是？"></a>获胜者是？</h1><p>显然，这个玩具需求的目的就是为了测试不同语言的能力，选出一个获胜者是必须的。但我不想把事情说得太绝对，毕竟不同的编程语言是为不同场景而生的。就上面的比拼来看，Go 显然比 Java 要好，但我对 Go 的好感要远低于 Java，这背后的原因以后再细谈。</p>
 <p>foo 函数的编写需要语言在两个方面的基本支持：嵌套函数捕获外部变量（词法作用域&#x2F;闭包）和修改外部状态。显然我们的获胜者是 Scheme&#x2F;Racket, Common Lisp 和 Arc！其次是 JavaScript 和 Ruby！接下来，Perl 5, Go, Rust 和 C# 也能很好地完成任务！Smalltalk, Python, Kotlin, Clojure 虽然需要手动捕获变量，但勉强能实现需求。C&#x2F;C++ 本体感到吃力，只能依靠 Clang 提供的 Blocks 扩展。垫底选手是 Java, 什么样的黑魔法都拯救不了它不能返回函数的特性。</p>
-<p>（如果你喜欢本文，请出门扫码献爱心。本文定价5元）</p>
+<p>（如果你喜欢本文，请出门扫码献爱心。本文定价2元）</p>
 
       
     </div>
@@ -498,7 +498,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-count">11</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>

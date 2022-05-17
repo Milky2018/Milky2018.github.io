@@ -87,7 +87,7 @@
 <meta property="og:description" content="值和引用是编程中经常需要面对的两个概念，本文将结合主流编程语言的做法，在抽象和实现层面对这两个概念进行初步的解释。 地址的概念在解释值和引用之前，我们先看一段 RISC 风格的汇编代码，它完成的事情是将变量 y 的值赋给变量 x. 1234&#x2F;&#x2F; x &#x3D; yld r1, yst r1, x 在这段代码中，x 和 y 表示的都是变量的地址。两行代码的行为分别是：将地址 y">
 <meta property="og:locale">
 <meta property="article:published_time" content="2019-07-18T15:13:50.000Z">
-<meta property="article:modified_time" content="2019-07-18T16:59:16.231Z">
+<meta property="article:modified_time" content="2022-05-11T02:46:54.888Z">
 <meta property="article:author" content="John Doe">
 <meta name="twitter:card" content="summary">
 
@@ -343,7 +343,7 @@
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Book* book = <span class="keyword">new</span> EnglishBook;</span><br></pre></td></tr></table></figure>
 <p>如果一门语言不支持这样的自动向上类型转换，那么它就无法体现面向对象的优势（不是完全不可以，大家可以尝试用 C 语言写一个类似的功能）。而这转换是靠引用完成的——无论你是用指针还是定义引用变量。所以，至少对于面向对象语言而言，引用所给予的数据抽象能力是必不可少的。</p>
 <p>在 C# 和 Swift 等语言中，引用类型和值类型被同时保留了。它们对此的处理有一些共性：引用类型拷贝时拷贝地址（浅拷贝），可以继承；值类型拷贝时拷贝数据（深拷贝），不能继承。从这里也可以明确的看出，一个值类型变量无法被多次引用，所以不能提供引用类型所能提供的抽象能力，进而也就没有继承的必要。在 C# 和 Swift 的横向对比中，就这个问题上，C# 虽然年纪更大，但做得要好得多。Swift 的一个让人不能理解的设计错误就是集合类型是值类型——这是几乎不能容忍的。我猜测这是在早期的 Swift 中对 let（常量声明）的语义处理上出现的失误导致的。</p>
-<p>（如果你喜欢本文，请出门扫码献爱心。本文定价3元）</p>
+<p>（如果你喜欢本文，请出门扫码献爱心。本文定价1元）</p>
 
       
     </div>
@@ -486,7 +486,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-count">11</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
