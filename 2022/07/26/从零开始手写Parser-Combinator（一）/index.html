@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next muse use-motion" lang="">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="Haskell," />
+
+
+
+
+
+
+
+
+
+
+<meta name="description" content="在上次那个最简单的 parser 的基础上，我们要做一点适当的改动，使得 parser 不仅可以输出字符，还可以输出任何东西。 任何类型作为结果的 parser所以 Parser 类型至少是这样的： 1type Parser a &#x3D; String -&gt; a  上次我们用 error 粗暴地对待 parse 过程中的错误，现在我们把错误放到类型里，方便 parser 返回更精确的错误信息： 1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从零开始手写Parser Combinator（一）">
+<meta property="og:url" content="http://yoursite.com/2022/07/26/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%89%8B%E5%86%99Parser-Combinator%EF%BC%88%E4%B8%80%EF%BC%89/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="在上次那个最简单的 parser 的基础上，我们要做一点适当的改动，使得 parser 不仅可以输出字符，还可以输出任何东西。 任何类型作为结果的 parser所以 Parser 类型至少是这样的： 1type Parser a &#x3D; String -&gt; a  上次我们用 error 粗暴地对待 parse 过程中的错误，现在我们把错误放到类型里，方便 parser 返回更精确的错误信息： 1">
+<meta property="og:locale">
+<meta property="article:published_time" content="2022-07-26T06:03:29.000Z">
+<meta property="article:modified_time" content="2022-08-16T09:18:11.431Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="Haskell">
+<meta name="twitter:card" content="summary">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '',
+    scheme: 'Muse',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: 'Author'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2022/07/26/从零开始手写Parser-Combinator（一）/"/>
+
+
+
+
+
+  <title>从零开始手写Parser Combinator（一） | Hexo</title>
+  
+
+
+
+
+
+
+
+
+<meta name="generator" content="Hexo 5.3.0"></head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="default">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Hexo</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle"></p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            Home
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            Archives
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2022/07/26/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%89%8B%E5%86%99Parser-Combinator%EF%BC%88%E4%B8%80%EF%BC%89/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/avatar.gif">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">从零开始手写Parser Combinator（一）</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">Posted on</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2022-07-26T14:03:29+08:00">
+                2022-07-26
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>在上次那个最简单的 parser 的基础上，我们要做一点适当的改动，使得 parser 不仅可以输出字符，还可以输出任何东西。</p>
+<h1 id="任何类型作为结果的-parser"><a href="#任何类型作为结果的-parser" class="headerlink" title="任何类型作为结果的 parser"></a>任何类型作为结果的 parser</h1><p>所以 <code>Parser</code> 类型至少是这样的：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="type">Parser</span> a = <span class="type">String</span> -&gt; a </span></span><br></pre></td></tr></table></figure>
+<p>上次我们用 <code>error</code> 粗暴地对待 parse 过程中的错误，现在我们把错误放到类型里，方便 parser 返回更精确的错误信息：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">data</span> <span class="type">ParseError</span> = <span class="type">ParseError</span> <span class="type">String</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="type">Parser</span> a = <span class="type">String</span> -&gt; <span class="type">Either</span> <span class="type">ParseError</span> a</span></span><br></pre></td></tr></table></figure>
+<p>现在我们就可以重写上一章的程序了：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">parse</span> :: <span class="type">Parser</span> a -&gt; <span class="type">String</span> -&gt; <span class="type">Either</span> <span class="type">ParseError</span> a</span><br><span class="line"><span class="title">parse</span> p = p</span><br><span class="line"></span><br><span class="line"><span class="title">charParser</span> :: <span class="type">Parser</span> <span class="type">Char</span></span><br><span class="line"><span class="title">charParser</span> = \s -&gt; <span class="keyword">case</span> s <span class="keyword">of</span></span><br><span class="line">  [] -&gt; <span class="type">Left</span> $ <span class="type">ParseError</span> <span class="string">&quot;Empty string&quot;</span></span><br><span class="line">  (c:cs) -&gt; <span class="type">Right</span> c</span><br></pre></td></tr></table></figure>
+<p>很好，但还不够，因为我们希望 parser 可以做更复杂一点的事情，比如说 parse 出一个特定的字符，而不是任意字符。我们希望我们的 parser 有如下的功能：如果字符串开头是 <code>c</code>，就直接返回，否则报错。也就是说，我们希望这个 parser 对字符串进行条件判断。我们需要编写一个 <code>satisfy</code> 函数，它接收一个谓词，当谓词判断输入为真时，parser 就接收输入：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">satisfy</span> :: (<span class="type">Char</span> -&gt; <span class="type">Bool</span>) -&gt; <span class="type">Parser</span> <span class="type">Char</span>  </span><br><span class="line"><span class="title">satisfy</span> p s = <span class="keyword">case</span> s <span class="keyword">of</span></span><br><span class="line">  [] -&gt; <span class="type">Left</span> $ <span class="type">ParseError</span> <span class="string">&quot;Empty string&quot;</span></span><br><span class="line">  (c:cs) -&gt; <span class="keyword">if</span> p c <span class="keyword">then</span> <span class="type">Right</span> c <span class="keyword">else</span> <span class="type">Left</span> $ <span class="type">ParseError</span> $ <span class="string">&quot;Expected &quot;</span> ++ show c</span><br><span class="line"></span><br><span class="line"><span class="title">cParser</span> :: <span class="type">Parser</span> <span class="type">Char</span></span><br><span class="line"><span class="title">cParser</span> = satisfy (\c -&gt; c == &#x27;c&#x27;)</span><br></pre></td></tr></table></figure>
+<p>非常好！</p>
+<p>下一步就是处理更多的字符序列，例如在 parse 出字符 <code>c</code> 之后继续 parse 下一个字符 <code>o</code>，固然，可以这么写：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">coParser</span> :: <span class="type">Parser</span> <span class="type">String</span> </span><br><span class="line"><span class="title">coParser</span> [] = <span class="type">Left</span> $ <span class="type">ParseError</span> <span class="string">&quot;Empty string&quot;</span></span><br><span class="line"><span class="title">coParser</span> (c:cs) = </span><br><span class="line">  <span class="keyword">if</span> c == &#x27;c&#x27; </span><br><span class="line">  <span class="keyword">then</span> <span class="keyword">case</span> cs <span class="keyword">of</span> </span><br><span class="line">    [] -&gt; <span class="type">Left</span> $ <span class="type">ParseError</span> <span class="string">&quot;Only one c&quot;</span></span><br><span class="line">    (d:ds) -&gt; <span class="keyword">if</span> d == &#x27;o&#x27; <span class="keyword">then</span> <span class="type">Right</span> <span class="string">&quot;co&quot;</span> <span class="keyword">else</span> <span class="type">Left</span> $ <span class="type">ParseError</span> $ <span class="string">&quot;Expected &#x27;o&#x27; but got &quot;</span> ++ show d</span><br><span class="line">  <span class="keyword">else</span> <span class="type">Left</span> $ <span class="type">ParseError</span> $ <span class="string">&quot;Expected &#x27;c&#x27; but got &quot;</span> ++ show c</span><br></pre></td></tr></table></figure>
+<p>但既然我们已经有了 <code>satisfy</code>，为什么把两个 parser 组合起来呢？要组合多个 parser，一个 parser 在处理完字符串之后需要将剩余的字符串保存下来给下一个 parser 用。</p>
+<h1 id="可组合的-parser"><a href="#可组合的-parser" class="headerlink" title="可组合的 parser"></a>可组合的 parser</h1><p>现在我们修改 <code>Parser</code> 类型的定义，并添加 <code>regularParse</code> 函数使其忽略结果中剩余的字符串部分：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="type">Parser</span> a = <span class="type">String</span> -&gt; (<span class="type">String</span>, <span class="type">Either</span> <span class="type">ParseError</span> <span class="title">a</span>)</span></span><br><span class="line"></span><br><span class="line"><span class="title">regularParse</span> :: <span class="type">Parser</span> a -&gt; <span class="type">String</span> -&gt; <span class="type">Either</span> <span class="type">ParseError</span> a</span><br><span class="line"><span class="title">regularParse</span> p = snd . p</span><br></pre></td></tr></table></figure>
+<p>相应的，<code>satisfy</code> 函数可以修改成如下：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">satisfy</span> :: (<span class="type">Char</span> -&gt; <span class="type">Bool</span>) -&gt; <span class="type">Parser</span> <span class="type">Char</span></span><br><span class="line"><span class="title">satisfy</span> p input = <span class="keyword">case</span> input <span class="keyword">of</span></span><br><span class="line">  [] -&gt; ([], <span class="type">Left</span> $ <span class="type">ParseError</span> <span class="string">&quot;unexpected end of input&quot;</span>)</span><br><span class="line">  (x:xs) -&gt; (xs, <span class="keyword">if</span> p x <span class="keyword">then</span> <span class="type">Right</span> x <span class="keyword">else</span> <span class="type">Left</span> $ <span class="type">ParseError</span> $ <span class="string">&quot;unexpected &quot;</span> ++ [x])</span><br></pre></td></tr></table></figure>
+<p>现在我们就可以愉快地组合啦！</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">combinate</span> :: <span class="type">Parser</span> a -&gt; (a -&gt; <span class="type">Parser</span> b) -&gt; <span class="type">Parser</span> b </span><br><span class="line"><span class="title">combinate</span> p f input = <span class="keyword">case</span> p input <span class="keyword">of</span></span><br><span class="line">  (input&#x27;, <span class="type">Left</span> err) -&gt; (input&#x27;, <span class="type">Left</span> err)</span><br><span class="line">  (input&#x27;, <span class="type">Right</span> a) -&gt; <span class="keyword">case</span> f a input&#x27; <span class="keyword">of</span></span><br><span class="line">    (input&#x27;&#x27;, <span class="type">Left</span> err) -&gt; (input&#x27;&#x27;, <span class="type">Left</span> err)</span><br><span class="line">    (input&#x27;&#x27;, <span class="type">Right</span> b) -&gt; (input&#x27;&#x27;, <span class="type">Right</span> b)</span><br><span class="line"></span><br><span class="line"><span class="title">coParser</span> :: <span class="type">Parser</span> <span class="type">Char</span> </span><br><span class="line"><span class="title">coParser</span> = combinate (satisfy (== &#x27;c&#x27;)) (\x -&gt; satisfy (== &#x27;o&#x27;))</span><br></pre></td></tr></table></figure>
+<p>现在组合 parser 的工作就非常简单啦！只不过有个缺陷，就是组合得到的 <code>coParser</code> 忽略了前一个 parser 的结果，而直接取了后一个 parser 的结果作为最终结果。这不算什么问题，改起来也不困难，这里就不多赘述了。</p>
+<p>观察到 <code>satisfy</code> 函数的写法和 <code>combinate</code> 的写法后，为 <code>Parser</code> 类型实现 <code>Monad</code> typeclass 的冲动就自然产生了。接下来，为了让 <code>Parser</code> 更好用，我们为它实现一系列简单的 typeclass。</p>
+<h1 id="ParserMonad"><a href="#ParserMonad" class="headerlink" title="ParserMonad"></a>ParserMonad</h1><p>虚晃一枪！在写更多的代码之前，我们要做好充足的准备，那就是让我们的 parser 更加通用。首先，为 <code>ParseError</code> 类型注入更多的信息。考虑到遇见一个解析错误时，我们通常希望看到的报错信息是：我们希望解析器看到的是什么，而解析器实际看到的是什么。所以这个类型被改成这个样子：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">data</span> <span class="type">ParseError</span> = <span class="type">ParseError</span> &#123;</span></span><br><span class="line"><span class="class">    <span class="title">expected</span> :: <span class="type">String</span></span></span><br><span class="line"><span class="class">  , <span class="title">met</span> :: <span class="type">String</span>  </span></span><br><span class="line"><span class="class">&#125; <span class="keyword">deriving</span> (<span class="type">Show</span>)</span></span><br></pre></td></tr></table></figure>
+<p>对于 <code>Parser</code> 类型，我们过去用 typealias 表示，现在更正式地用 record 定义成如下形式：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">newtype</span> <span class="type">Parsec</span> s a = <span class="type">Parsec</span> &#123;</span></span><br><span class="line"><span class="class">    <span class="title">runParser</span> :: [<span class="title">s</span>] -&gt; ([<span class="title">s</span>], <span class="type">Either</span> <span class="type">ParseError</span> <span class="title">a</span>)</span></span><br><span class="line"><span class="class">&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="title">regularParse</span> :: <span class="type">Parsec</span> s a -&gt; [s] -&gt; <span class="type">Either</span> <span class="type">ParseError</span> a</span><br><span class="line"><span class="title">regularParse</span> p = snd . runParser p</span><br></pre></td></tr></table></figure>
+<p>注意，我把名字改成了 <code>ParseT</code>，并且为它增加了一个类型参数 <code>s</code>。这是因为一个 parser 不一定从字符串获取输入，也有可能从 token 流之类的数据结构获取输入，所以这里把输入参数类型泛化。当然，多数情况我们还是考虑作为字符串的输入，所以我们的主角是 <code>CharParser</code> 类型：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="type">CharParser</span> = <span class="type">Parsec</span> <span class="type">Char</span></span></span><br></pre></td></tr></table></figure>
+<p><code>Functor</code>、<code>Applicative</code>、<code>Monad</code> 的实现都是平凡的，这里直接贴出代码：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">instance</span> <span class="type">Functor</span> (<span class="type">Parsec</span> <span class="title">s</span>) <span class="keyword">where</span></span></span><br><span class="line">  fmap f (<span class="type">Parsec</span> p) = <span class="type">Parsec</span> $ \input -&gt; <span class="keyword">case</span> p input <span class="keyword">of</span></span><br><span class="line">    (input, <span class="type">Left</span> a) -&gt; (input, <span class="type">Left</span> a)</span><br><span class="line">    (input, <span class="type">Right</span> b) -&gt; (input, <span class="type">Right</span> (f b))</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">instance</span> <span class="type">Applicative</span> (<span class="type">Parsec</span> <span class="title">s</span>) <span class="keyword">where</span></span></span><br><span class="line">  pure a = <span class="type">Parsec</span> $ \input -&gt; (input, <span class="type">Right</span> a)</span><br><span class="line">  <span class="type">Parsec</span> p &lt;*&gt; <span class="type">Parsec</span> q = <span class="type">Parsec</span> $ \input -&gt; <span class="keyword">case</span> p input <span class="keyword">of</span></span><br><span class="line">    (input, <span class="type">Left</span> a) -&gt; (input, <span class="type">Left</span> a)</span><br><span class="line">    (input, <span class="type">Right</span> f) -&gt; <span class="keyword">case</span> q input <span class="keyword">of</span></span><br><span class="line">      (input, <span class="type">Left</span> a) -&gt; (input, <span class="type">Left</span> a)</span><br><span class="line">      (input, <span class="type">Right</span> b) -&gt; (input, <span class="type">Right</span> (f b))</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">instance</span> <span class="type">Monad</span> (<span class="type">Parsec</span> <span class="title">s</span>) <span class="keyword">where</span></span> </span><br><span class="line">  return = pure</span><br><span class="line">  <span class="type">Parsec</span> p &gt;&gt;= f = <span class="type">Parsec</span> $ \input -&gt; <span class="keyword">case</span> p input <span class="keyword">of</span></span><br><span class="line">    (input, <span class="type">Left</span> a) -&gt; (input, <span class="type">Left</span> a)</span><br><span class="line">    (input, <span class="type">Right</span> b) -&gt; runParser (f b) input</span><br></pre></td></tr></table></figure>
+<p>手动实现一遍这些 typeclass 有助于进一步理解 parser 的结构。实现了 <code>Monad</code> 之后，组合 parser 的代码就更简洁了：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">coParser</span> :: <span class="type">CharParser</span> <span class="type">Char</span></span><br><span class="line"><span class="title">coParser</span> = satisfy (== &#x27;c&#x27;) &gt;&gt; satisfy (== &#x27;o&#x27;)</span><br></pre></td></tr></table></figure>
+<p>更进一步的，我们把 <code>satisfy (== &#39;c&#39;)</code> 简化为 <code>char &#39;c&#39;</code>，这个 parser 表示解析单个字符：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">char</span> :: <span class="type">Char</span> -&gt; <span class="type">CharParser</span> <span class="type">Char</span> </span><br><span class="line"><span class="title">char</span> c = satisfy (== c)</span><br></pre></td></tr></table></figure>
+<p>继续这个思路，我们希望有这样一个 parser 能够直接解析一个指定的字符串：</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">string</span> :: <span class="type">String</span> -&gt; <span class="type">CharParser</span> ()</span><br><span class="line"><span class="title">string</span> [] = return ()</span><br><span class="line"><span class="title">string</span> (c : cs) = char c &gt;&gt; string cs</span><br></pre></td></tr></table></figure>
+<p>可以用 <code>regularParse (string &quot;combinator&quot;) &quot;combinator</code> 测试一下，这个 parser 确实能工作。但是，到目前为止，我们的 parser 至少有两个问题：</p>
+<ul>
+<li><code>satisfy</code> 的报错信息很模糊，我们通过错误信息只知道遇见了什么字符，而不知道我们需要什么字符</li>
+<li><code>string</code> 只能获得 Unit，而事实上我们更希望它能得到一个字符串</li>
+</ul>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>本人的博客供免费阅览，读者如果喜欢的话，可以自愿付款。每篇博文下都会有定价作为付款金额参考。付款金额无下限，有上限。对于定价为 a 元的文章，无论你多么喜欢，请不要支付超过 a*10 元。</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>Donate</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/2019/07/18/博客付款通道/IMG_0141.JPG" alt=" WeChat Pay"/>
+        <p>WeChat Pay</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/2019/07/18/博客付款通道/IMG_0142.JPG" alt=" Alipay"/>
+        <p>Alipay</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Haskell/" rel="tag"># Haskell</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2022/07/26/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%89%8B%E5%86%99Parser-Combinator%EF%BC%88%E3%80%87%EF%BC%89/" rel="next" title="从零开始手写Parser Combinator（〇）">
+                <i class="fa fa-chevron-left"></i> 从零开始手写Parser Combinator（〇）
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2022/08/16/%E6%95%B0%E6%8D%AE%E5%A4%8D%E5%88%B6%E3%80%81%E4%B8%80%E8%87%B4%E6%80%A7%E5%92%8C%E5%85%B1%E8%AF%86/" rel="prev" title="数据复制、一致性和共识">
+                数据复制、一致性和共识 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            Table of Contents
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            Overview
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <p class="site-author-name" itemprop="name"></p>
+              <p class="site-description motion-element" itemprop="description"></p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/%7C%7C%20archive">
+              
+                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-name">posts</span>
+                </a>
+              </div>
+            
+
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                
+                  <span class="site-state-item-count">1</span>
+                  <span class="site-state-item-name">tags</span>
+                
+              </div>
+            
+
+          </nav>
+
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BB%BB%E4%BD%95%E7%B1%BB%E5%9E%8B%E4%BD%9C%E4%B8%BA%E7%BB%93%E6%9E%9C%E7%9A%84-parser"><span class="nav-number">1.</span> <span class="nav-text">任何类型作为结果的 parser</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%AF%E7%BB%84%E5%90%88%E7%9A%84-parser"><span class="nav-number">2.</span> <span class="nav-text">可组合的 parser</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#ParserMonad"><span class="nav-number">3.</span> <span class="nav-text">ParserMonad</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">John Doe</span>
+
+  
+</div>
+
+
+  <div class="powered-by">Powered by <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a></div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">Theme &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Muse</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>

@@ -79,15 +79,15 @@
 
 
 
-<meta name="description" content="最近了解了区块链方面的知识，在尝试在自己的电脑上搭建 Hyperledger Fabric 时遇见了几个坑。自己踩过了，给各位提个醒，希望大家能少走点弯路。 git clone 速度慢导致失败如果你 git clone 国外资源时速度只有 10kB&#x2F;s 左右，那么很容易 clone 到一半就发生异常然后中止。可能的情况有很多，比如，如果你遇见了这种 Error： 1git error:">
+<meta name="description" content="本文简要介绍传统数据密集型应用中的数据复制方式，指出分布式应用数据复制的难点——一致性保证，引入分布式共识问题，最终说明分布式共识的等价问题。 数据复制数据复制即为一份数据创建多个副本，目的常常有三个：降低访问延迟、提高可用性、提高吞吐量。 模型假设如果要处理的数据是不可变的，那么复制就非常简单；如果所有保存数据的机器都不会发生失败，那么容错也非常简单；如果机器之间的网络是可靠的，那么分布式和单机">
 <meta property="og:type" content="article">
-<meta property="og:title" content="搭建Heperledger Fabric时需要避免的坑">
-<meta property="og:url" content="http://yoursite.com/2020/01/06/%E6%90%AD%E5%BB%BAHeperledger-Fabric%E6%97%B6%E9%9C%80%E8%A6%81%E9%81%BF%E5%85%8D%E7%9A%84%E5%9D%91/index.html">
+<meta property="og:title" content="数据复制、一致性和共识">
+<meta property="og:url" content="http://yoursite.com/2022/08/16/%E6%95%B0%E6%8D%AE%E5%A4%8D%E5%88%B6%E3%80%81%E4%B8%80%E8%87%B4%E6%80%A7%E5%92%8C%E5%85%B1%E8%AF%86/index.html">
 <meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="最近了解了区块链方面的知识，在尝试在自己的电脑上搭建 Hyperledger Fabric 时遇见了几个坑。自己踩过了，给各位提个醒，希望大家能少走点弯路。 git clone 速度慢导致失败如果你 git clone 国外资源时速度只有 10kB&#x2F;s 左右，那么很容易 clone 到一半就发生异常然后中止。可能的情况有很多，比如，如果你遇见了这种 Error： 1git error:">
+<meta property="og:description" content="本文简要介绍传统数据密集型应用中的数据复制方式，指出分布式应用数据复制的难点——一致性保证，引入分布式共识问题，最终说明分布式共识的等价问题。 数据复制数据复制即为一份数据创建多个副本，目的常常有三个：降低访问延迟、提高可用性、提高吞吐量。 模型假设如果要处理的数据是不可变的，那么复制就非常简单；如果所有保存数据的机器都不会发生失败，那么容错也非常简单；如果机器之间的网络是可靠的，那么分布式和单机">
 <meta property="og:locale">
-<meta property="article:published_time" content="2020-01-06T02:18:32.000Z">
-<meta property="article:modified_time" content="2020-03-25T04:20:56.375Z">
+<meta property="article:published_time" content="2022-08-16T09:16:04.000Z">
+<meta property="article:modified_time" content="2022-08-17T02:09:28.824Z">
 <meta property="article:author" content="John Doe">
 <meta name="twitter:card" content="summary">
 
@@ -119,13 +119,13 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2020/01/06/搭建Heperledger-Fabric时需要避免的坑/"/>
+  <link rel="canonical" href="http://yoursite.com/2022/08/16/数据复制、一致性和共识/"/>
 
 
 
 
 
-  <title>搭建Heperledger Fabric时需要避免的坑 | Hexo</title>
+  <title>数据复制、一致性和共识 | Hexo</title>
   
 
 
@@ -232,7 +232,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2020/01/06/%E6%90%AD%E5%BB%BAHeperledger-Fabric%E6%97%B6%E9%9C%80%E8%A6%81%E9%81%BF%E5%85%8D%E7%9A%84%E5%9D%91/">
+    <link itemprop="mainEntityOfPage" href="http://yoursite.com/2022/08/16/%E6%95%B0%E6%8D%AE%E5%A4%8D%E5%88%B6%E3%80%81%E4%B8%80%E8%87%B4%E6%80%A7%E5%92%8C%E5%85%B1%E8%AF%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="">
@@ -249,7 +249,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">搭建Heperledger Fabric时需要避免的坑</h1>
+          <h1 class="post-title" itemprop="name headline">数据复制、一致性和共识</h1>
         
 
         <div class="post-meta">
@@ -261,8 +261,8 @@
               
                 <span class="post-meta-item-text">Posted on</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2020-01-06T10:18:32+08:00">
-                2020-01-06
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2022-08-16T17:16:04+08:00">
+                2022-08-16
               </time>
             
 
@@ -299,30 +299,14 @@
       
 
       
-        <p>最近了解了区块链方面的知识，在尝试在自己的电脑上搭建 Hyperledger Fabric 时遇见了几个坑。自己踩过了，给各位提个醒，希望大家能少走点弯路。</p>
-<h1 id="git-clone-速度慢导致失败"><a href="#git-clone-速度慢导致失败" class="headerlink" title="git clone 速度慢导致失败"></a>git clone 速度慢导致失败</h1><p>如果你 git clone 国外资源时速度只有 10kB&#x2F;s 左右，那么很容易 clone 到一半就发生异常然后中止。可能的情况有很多，比如，如果你遇见了这种 Error：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git error: RPC failed; curl 56 GnuTLS</span><br></pre></td></tr></table></figure>
-<p>我想 stack overflow 上已经有比较完整的解答：<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/38378914/git-error-rpc-failed-curl-56-gnutls">https://stackoverflow.com/questions/38378914/git-error-rpc-failed-curl-56-gnutls</a></p>
-<p>你或许可以尝试修改 git 的配置信息，比如修改 http 的 postbuffer 大小：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git config --global http.postBuffer 1048576000</span></span><br></pre></td></tr></table></figure>
-<p>不过这个方法往往是用来解决 post 失败的问题的。</p>
-<p>在国内，有科学上网的条件，clone 的速度应当要快得多；要注意的是，如果你已经科学上网了，速度还是很慢，或许你应当检查自己的 http 代理。例如，socks5 的 http 代理设置过程：</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> git config --global http.proxy <span class="string">&#x27;socks5://127.0.0.1:1080&#x27;</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> git config --global https.proxy <span class="string">&#x27;socks5://127.0.0.1:1080&#x27;</span></span></span><br></pre></td></tr></table></figure>
-<p>如果你没有科学上网的条件，而且服务器在国内，那么你或许可以尝试修改 hosts 文件，手动添加几个 IP 映射，再刷新 DNS 缓存。具体的修改方式这里不多介绍，因为可能的方式太多了，建议亲自尝试增加几个 IP 映射看看效果。</p>
-<p>Windows 的 hosts 文件目录在这里：<code>C:/Windows/system32/drivers/etc/hosts</code></p>
-<p>*nix 的 hosts 文件目录一般在这里：<code>/etc/hosts</code></p>
-<p>Windows DNS 缓存刷新的命令：<code>ipconfig /flushdns</code> </p>
-<p>*nix 命令：<code>sudo systemctl restart nscd</code></p>
-<hr>
-<p>2020.3.23更新</p>
-<p>修改 hosts 文件来手动调整 IP 映射的方式有时不太好用，有不少人在网络上分享了更好用的方法，比如将 github 项目克隆到国内的代码管理仓库再下载。具体操作方式可以参考该视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1aE411p7Cd">https://www.bilibili.com/video/BV1aE411p7Cd</a></p>
-<h1 id="用官方提供的脚本文件不能成功下载binaries"><a href="#用官方提供的脚本文件不能成功下载binaries" class="headerlink" title="用官方提供的脚本文件不能成功下载binaries"></a>用官方提供的脚本文件不能成功下载binaries</h1><p>在搭建区块链网络的初始阶段，需要下载两个 binaries 文件，分别是 hyperledger-fabric 和 hyperledger-fabric-ca，如果不能科学上网，用官方提供的脚本文件几乎是不能正常下载它们的。这时我们需要手动下载。这里有一个 Hyperledger Fabric 资源的镜像网站：<a target="_blank" rel="noopener" href="https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger">https://nexus.hyperledger.org/content/repositories/releases/org/hyperledger</a></p>
-<p>但这个网站的资源不一定能随时更新到最新，比如我写这篇文章时，它的 hyperledger-fabric 文件最新为 1.4.4 版本，hyperledger-fabric-ca 的最新却只更新到 1.4.3 版本。我建议可以从下载二进制文件的脚本中把需要的文件地址 Copy 下来，然后用自己的下载器进行下载（为了成功运行脚本，你需要把脚本中对应的下载的代码删去），我用的是 Motrix。</p>
-<hr>
-<p>2020.3.23更新</p>
-<p>目前 nexus 网站也不能正常访问。官网给出的 bootstrap 脚本地址 <a target="_blank" rel="noopener" href="https://bit.ly/2ysbOFE">https://bit.ly/2ysbOFE</a> 同样不能正常访问，但里面的内容和 <a target="_blank" rel="noopener" href="https://github.com/hyperledger/fabric/blob/master/scripts/bootstrap.sh">https://github.com/hyperledger/fabric/blob/master/scripts/bootstrap.sh</a> 是一样的。想要下载 binaries，可以直接访问 <a target="_blank" rel="noopener" href="https://github.com/hyperledger/fabric/releases/">https://github.com/hyperledger/fabric/releases/</a> 和 <a target="_blank" rel="noopener" href="https://github.com/hyperledger/fabric-ca/releases">https://github.com/hyperledger/fabric-ca/releases</a> ，选择相应的文件进行下载。下载工具同样可以使用你自己喜欢的工具。</p>
-<h1 id="docker拉取镜像速度慢"><a href="#docker拉取镜像速度慢" class="headerlink" title="docker拉取镜像速度慢"></a>docker拉取镜像速度慢</h1><p>Docker 拉取镜像速度慢一般不会导致中止，所以如果你有耐心，可以慢慢等，一般来说一天足够拉取所有需要的镜像了。我以前用的是网易的镜像云，发现速度很慢，现在换了阿里的，稍微快了一些。大家也可以多尝试几个镜像源。</p>
-<p>（本文定价0元）</p>
+        <p>本文简要介绍传统数据密集型应用中的数据复制方式，指出分布式应用数据复制的难点——一致性保证，引入分布式共识问题，最终说明分布式共识的等价问题。</p>
+<h1 id="数据复制"><a href="#数据复制" class="headerlink" title="数据复制"></a>数据复制</h1><p>数据复制即为一份数据创建多个副本，目的常常有三个：降低访问延迟、提高可用性、提高吞吐量。</p>
+<h2 id="模型假设"><a href="#模型假设" class="headerlink" title="模型假设"></a>模型假设</h2><p>如果要处理的数据是不可变的，那么复制就非常简单；如果所有保存数据的机器都不会发生失败，那么容错也非常简单；如果机器之间的网络是可靠的，那么分布式和单机就没有本质区别。所以，我们要面对的问题往往是：处理可变数据、应对分区容错和不可靠网络的。</p>
+<p>对于数据而言，简单地假设数据集是一个 key-value 映射，对应的操作有两个：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">read(k) -&gt; v</span><br><span class="line">write(k, v)</span><br></pre></td></tr></table></figure>
+<p>分区容错意味着集群中任何一台机器都有可能失败，失败的机器不能再处理任何请求，也不能发出指令，只能等待它自己恢复。</p>
+<p>不可靠网络意味着以上这两条指令可能会到达目标机器，也可能不会。</p>
+<h2 id="主从复制"><a href="#主从复制" class="headerlink" title="主从复制"></a>主从复制</h2><p>最简单、最直接的复制方式是主从复制，即 n 个副本的系统中，由一个副本担任主副本，其余 n-1 个担任从副本。其中主副本处理读、写请求，而从副本只处理读请求。</p>
 
       
     </div>
@@ -376,8 +360,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2019/08/29/Y-Combinator%E7%AE%80%E4%BB%8B/" rel="next" title="Y-Combinator简介">
-                <i class="fa fa-chevron-left"></i> Y-Combinator简介
+              <a href="/2022/07/26/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%89%8B%E5%86%99Parser-Combinator%EF%BC%88%E4%B8%80%EF%BC%89/" rel="next" title="从零开始手写Parser Combinator（一）">
+                <i class="fa fa-chevron-left"></i> 从零开始手写Parser Combinator（一）
               </a>
             
           </div>
@@ -386,8 +370,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2020/04/06/Subtyping%E7%AE%80%E4%BB%8B/" rel="prev" title="Subtyping简介">
-                Subtyping简介 <i class="fa fa-chevron-right"></i>
+              <a href="/2022/08/17/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" rel="prev" title="分布式锁">
+                分布式锁 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -511,7 +495,7 @@
             
 
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#git-clone-%E9%80%9F%E5%BA%A6%E6%85%A2%E5%AF%BC%E8%87%B4%E5%A4%B1%E8%B4%A5"><span class="nav-number">1.</span> <span class="nav-text">git clone 速度慢导致失败</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%94%A8%E5%AE%98%E6%96%B9%E6%8F%90%E4%BE%9B%E7%9A%84%E8%84%9A%E6%9C%AC%E6%96%87%E4%BB%B6%E4%B8%8D%E8%83%BD%E6%88%90%E5%8A%9F%E4%B8%8B%E8%BD%BDbinaries"><span class="nav-number">2.</span> <span class="nav-text">用官方提供的脚本文件不能成功下载binaries</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#docker%E6%8B%89%E5%8F%96%E9%95%9C%E5%83%8F%E9%80%9F%E5%BA%A6%E6%85%A2"><span class="nav-number">3.</span> <span class="nav-text">docker拉取镜像速度慢</span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%A4%8D%E5%88%B6"><span class="nav-number">1.</span> <span class="nav-text">数据复制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E5%81%87%E8%AE%BE"><span class="nav-number">1.1.</span> <span class="nav-text">模型假设</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6"><span class="nav-number">1.2.</span> <span class="nav-text">主从复制</span></a></li></ol></li></ol></div>
             
 
           </div>
