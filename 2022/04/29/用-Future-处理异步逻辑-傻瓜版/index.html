@@ -79,15 +79,15 @@
 
 
 
-<meta name="description" content="用 Future 处理异步逻辑（傻瓜版） 很多编程语言（JavaScript, Rust, C#）都将 async&#x2F;await 作为语言内置的异步编程接口，虽然实现不同，对外表现也都大同小异。这里以 js 为例说明 async&#x2F;await 的使用动机、使用方式。  为什么 JavaScript 没有 sleep 这样的函数？   因为 JavaScript 最初仅被用于浏览器解">
+<meta name="description" content="用 Future 处理异步逻辑（傻瓜版） 很多编程语言（JavaScript, Rust, C#）都将 async&#x2F;await 作为语言内置的异步编程接口，虽然实现不同，对外表现也都大同小异。这里以 js 为例说明 async&#x2F;await 的使用动机、使用方式。  为什么 JavaScript 没有 sleep 这样的函数？   因为 JavaScript 最初仅被用于浏览器操">
 <meta property="og:type" content="article">
 <meta property="og:title" content="用 Future 处理异步逻辑(傻瓜版)">
 <meta property="og:url" content="http://yoursite.com/2022/04/29/%E7%94%A8-Future-%E5%A4%84%E7%90%86%E5%BC%82%E6%AD%A5%E9%80%BB%E8%BE%91-%E5%82%BB%E7%93%9C%E7%89%88/index.html">
 <meta property="og:site_name" content="Hexo">
-<meta property="og:description" content="用 Future 处理异步逻辑（傻瓜版） 很多编程语言（JavaScript, Rust, C#）都将 async&#x2F;await 作为语言内置的异步编程接口，虽然实现不同，对外表现也都大同小异。这里以 js 为例说明 async&#x2F;await 的使用动机、使用方式。  为什么 JavaScript 没有 sleep 这样的函数？   因为 JavaScript 最初仅被用于浏览器解">
+<meta property="og:description" content="用 Future 处理异步逻辑（傻瓜版） 很多编程语言（JavaScript, Rust, C#）都将 async&#x2F;await 作为语言内置的异步编程接口，虽然实现不同，对外表现也都大同小异。这里以 js 为例说明 async&#x2F;await 的使用动机、使用方式。  为什么 JavaScript 没有 sleep 这样的函数？   因为 JavaScript 最初仅被用于浏览器操">
 <meta property="og:locale">
 <meta property="article:published_time" content="2022-04-29T07:44:24.000Z">
-<meta property="article:modified_time" content="2022-05-11T02:46:15.942Z">
+<meta property="article:modified_time" content="2022-09-14T03:22:48.700Z">
 <meta property="article:author" content="John Doe">
 <meta name="twitter:card" content="summary">
 
@@ -305,7 +305,7 @@
 <p>为什么 JavaScript 没有 sleep 这样的函数？</p>
 </blockquote>
 <blockquote>
-<p>因为 JavaScript 最初仅被用于浏览器解释，是单线程的。首先单线程程序没有 sleep 的必要，其次，设想某个程序组件调用了 sleep，将导致整个浏览器卡死在这里，是不是很恐怖？</p>
+<p>因为 JavaScript 最初仅被用于浏览器操作 DOM，是单线程的。首先单线程程序没有 sleep 的必要，其次，设想某个程序组件调用了 sleep，将导致整个浏览器卡死在这里，是不是很恐怖？</p>
 </blockquote>
 <p>这篇博客最初是用来在实验室小组内10分钟为同事们普及 JavaScript Promise 编程概念而写的，所以没有涉及任何有难度的 PL 知识和实现层面的细节。</p>
 <h1 id="Promise-动机"><a href="#Promise-动机" class="headerlink" title="Promise 动机"></a>Promise 动机</h1><p>阻塞无处不在。假设我们需要请求一个网页的内容，并对这个内容进行打印输出，一个普通的同步 API 是这个样子的：</p>
@@ -369,7 +369,7 @@
 <p>什么是 monad？</p>
 </blockquote>
 <blockquote>
-<p>monad（单子）即自函子范畴上的幺半群（大雾）。</p>
+<p>monad（单子）即自函子范畴上的幺半群（雾）。</p>
 </blockquote>
 <p>考虑到 <code>resolve</code> 回调的返回值如果不是 Promise 则会自动转为 Promise，所以分两种情况讨论。</p>
 <p>当 resolve 回调的返回值不是 Promise：</p>
@@ -523,7 +523,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-count">13</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
