@@ -87,7 +87,7 @@
 <meta property="og:description" content="与其问什么是 continuation，不如先问什么是控制流。 控制流在各编程语言中都是相当基础的概念，它表示程序接下来应该怎么执行。典型的命令式语言程序中存在条件控制流和循环控制流，部分语言中存在 try-catch 异常捕获机制。它们的实现往往和语言本身的实现有紧密的关系。例如，一个 C 语言的编译器需要为条件表达式单独创建一个 AST，并对这个 AST 进行特有的语义分析（或者进行仅属于条件">
 <meta property="og:locale">
 <meta property="article:published_time" content="2020-05-08T07:11:25.000Z">
-<meta property="article:modified_time" content="2022-10-25T10:55:27.543Z">
+<meta property="article:modified_time" content="2023-06-28T02:15:12.138Z">
 <meta property="article:author" content="John Doe">
 <meta name="twitter:card" content="summary">
 
@@ -99,7 +99,7 @@
     root: '',
     scheme: 'Muse',
     version: '5.1.4',
-    sidebar: {"position":"right","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    sidebar: {"position":"left","display":"post","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
     fancybox: true,
     tabs: true,
     motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
@@ -144,7 +144,7 @@
     
   
 
-  <div class="container sidebar-position-right page-post-detail">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -301,7 +301,7 @@
       
         <p>与其问什么是 continuation，不如先问什么是控制流。</p>
 <p>控制流在各编程语言中都是相当基础的概念，它表示程序接下来应该怎么执行。典型的命令式语言程序中存在条件控制流和循环控制流，部分语言中存在 try-catch 异常捕获机制。它们的实现往往和语言本身的实现有紧密的关系。例如，一个 C 语言的编译器需要为条件表达式单独创建一个 AST，并对这个 AST 进行特有的语义分析（或者进行仅属于条件表达式规则的求值）。C 语言中 continuation 表现为当前状态下处理器里各个寄存器的值和栈内数据。</p>
-<p>和以前一样，为了简单，我会选择 Scheme 这样易于解释的语言来编写程序作为辅助说明，有时可能也会选择 JavaScript 这种人人都能轻易地看懂而且表达能力强大的语言，或许也会使用 Haskell 这样拥有相对强大类型系统的语言。</p>
+<p>和以前一样，为了清晰性，我会选择 Scheme 这样易于解释的语言来编写程序作为辅助说明，有时可能也会选择 JavaScript 这种人人都能轻易地看懂而且表达能力强大的语言，或许也会使用 Haskell 这样拥有相对强大类型系统的语言。</p>
 <h1 id="作为控制流的抽象"><a href="#作为控制流的抽象" class="headerlink" title="作为控制流的抽象"></a>作为控制流的抽象</h1><p>Continuation 是控制流的抽象。在一个表达式求值的过程中，continuation 就是求值到目前为止剩下的部分。</p>
 <p>（在经典教材 EOPL 中，这类抽象一般会使用“过程表达”和“数据结构表达”两种形式进行表达。这篇文章中，我们仅使用过程表达，下次有机会或许我可能专门写一篇文章来尝试用数据结构表达来重写一些文章里的示例。）</p>
 <p>考虑一个阶乘函数：</p>
@@ -314,7 +314,7 @@
 <figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">  (<span class="name">fact</span> <span class="number">2</span>)</span><br><span class="line">= ((lambda (r) (* 2 r)) (fact 1))</span><br><span class="line">= ((lambda (r) (* 2 r)) </span><br><span class="line">   ((<span class="name"><span class="builtin-name">lambda</span></span> (r) (<span class="name"><span class="builtin-name">*</span></span> <span class="number">1</span> r))</span><br><span class="line">    (fact 0)))</span><br></pre></td></tr></table></figure>
 <p>执行到这一步，<code>(fact 0)</code>外面有两个 continuation：一个在求值<code>(fact 1)</code>到过程中，<code>(fact 0)</code>求值完后要做的事情；另一个是<code>(fact 1)</code>求值完后要做的事情。事实上，它们可以看作一个 continutaion，都是<code>(fact 0)</code>求值完后要做的事情。也就是说，对参数的求值过程使得 continuation 变大了。</p>
 <p>让我们再看看一个暴露 continuation 的条件表达式求值过程：</p>
-<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">  (<span class="name"><span class="builtin-name">if</span></span> (<span class="name"><span class="builtin-name">zero?</span></span> <span class="number">0</span>) <span class="number">1</span> <span class="number">2</span>)</span><br><span class="line">= ((lambda (r)</span><br><span class="line">     (<span class="name"><span class="builtin-name">if</span></span> r <span class="number">1</span> <span class="number">2</span>)</span><br><span class="line">   (zero? 0))</span><br><span class="line">= ((lambda (r)</span><br><span class="line">     (if r 1 2))</span><br><span class="line">   #t)</span><br><span class="line">= (if #t 1 2)</span><br><span class="line">= 1</span><br></pre></td></tr></table></figure>
+<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">  (<span class="name"><span class="builtin-name">if</span></span> (<span class="name"><span class="builtin-name">zero?</span></span> <span class="number">0</span>) <span class="number">1</span> <span class="number">2</span>)</span><br><span class="line">= ((lambda (r)</span><br><span class="line">     (<span class="name"><span class="builtin-name">if</span></span> r <span class="number">1</span> <span class="number">2</span>)</span><br><span class="line">   (zero? 0)))</span><br><span class="line">= ((lambda (r)</span><br><span class="line">     (if r 1 2))</span><br><span class="line">   #t)</span><br><span class="line">= (if #t 1 2)</span><br><span class="line">= 1</span><br></pre></td></tr></table></figure>
 <p>我想我已经表达清楚 continuation 的概念了。那么它到底有什么用呢？解释器直接对表达式求值和先构造其 continuation 再 apply 有什么区别呢？</p>
 <h1 id="call-x2F-cc"><a href="#call-x2F-cc" class="headerlink" title="call&#x2F;cc"></a>call&#x2F;cc</h1><p>当 continuation-passing interpreter 对表达式求值时，构造了表达式的 continuation，并通过把它作为参数传递再进行求值。这样做的一个很大好处是增加解释器的灵活性，使得解释器可以面对更多其它的控制流。还有一个好处，就是可以把 continuation 暴露给程序员！</p>
 <p>call&#x2F;cc 的含义是 call with current continuation，是 Scheme 中用来操作 continuation 的函数。例如：</p>
@@ -558,7 +558,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2022</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>
