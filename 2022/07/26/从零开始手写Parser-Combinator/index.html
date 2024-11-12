@@ -81,13 +81,13 @@
 
 <meta name="description" content="这不是一个教程，只是一个 Haskell 入门学习笔记。 我们的任务是编写一个用于编写 parser 的库。作为最简化的基础内容，一个 parser 应该具有把字符串转化为 AST 的能力。现在我们只有字符串，没有 AST，不妨假设我们的目标 AST 就是一个字符，这个 parser 应该像这样： 12345678type Parser &#x3D; String -&gt; Charparser :: P">
 <meta property="og:type" content="article">
-<meta property="og:title" content="从零开始手写Parser Combinator（一）">
+<meta property="og:title" content="从零开始手写Parser Combinator">
 <meta property="og:url" content="http://yoursite.com/2022/07/26/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%89%8B%E5%86%99Parser-Combinator/index.html">
 <meta property="og:site_name" content="Hexo">
 <meta property="og:description" content="这不是一个教程，只是一个 Haskell 入门学习笔记。 我们的任务是编写一个用于编写 parser 的库。作为最简化的基础内容，一个 parser 应该具有把字符串转化为 AST 的能力。现在我们只有字符串，没有 AST，不妨假设我们的目标 AST 就是一个字符，这个 parser 应该像这样： 12345678type Parser &#x3D; String -&gt; Charparser :: P">
 <meta property="og:locale">
 <meta property="article:published_time" content="2022-07-26T06:03:29.000Z">
-<meta property="article:modified_time" content="2022-10-25T10:57:18.869Z">
+<meta property="article:modified_time" content="2024-05-20T06:37:22.284Z">
 <meta property="article:author" content="John Doe">
 <meta property="article:tag" content="Haskell">
 <meta name="twitter:card" content="summary">
@@ -126,7 +126,7 @@
 
 
 
-  <title>从零开始手写Parser Combinator（一） | Hexo</title>
+  <title>从零开始手写Parser Combinator | Hexo</title>
   
 
 
@@ -250,7 +250,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">从零开始手写Parser Combinator（一）</h1>
+          <h1 class="post-title" itemprop="name headline">从零开始手写Parser Combinator</h1>
         
 
         <div class="post-meta">
@@ -329,7 +329,7 @@
 <figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">data</span> <span class="type">ParseError</span> = <span class="type">ParseError</span> &#123;</span></span><br><span class="line"><span class="class">    <span class="title">expected</span> :: <span class="type">String</span></span></span><br><span class="line"><span class="class">  , <span class="title">met</span> :: <span class="type">String</span>  </span></span><br><span class="line"><span class="class">&#125; <span class="keyword">deriving</span> (<span class="type">Show</span>)</span></span><br></pre></td></tr></table></figure>
 <p>对于 <code>Parser</code> 类型，我们过去用 typealias 表示，现在更正式地用 record 定义成如下形式：</p>
 <figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">newtype</span> <span class="type">Parsec</span> s a = <span class="type">Parsec</span> &#123;</span></span><br><span class="line"><span class="class">    <span class="title">runParser</span> :: [<span class="title">s</span>] -&gt; ([<span class="title">s</span>], <span class="type">Either</span> <span class="type">ParseError</span> <span class="title">a</span>)</span></span><br><span class="line"><span class="class">&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="title">regularParse</span> :: <span class="type">Parsec</span> s a -&gt; [s] -&gt; <span class="type">Either</span> <span class="type">ParseError</span> a</span><br><span class="line"><span class="title">regularParse</span> p = snd . runParser p</span><br></pre></td></tr></table></figure>
-<p>注意，我把名字改成了 <code>ParseT</code>，并且为它增加了一个类型参数 <code>s</code>。这是因为一个 parser 不一定从字符串获取输入，也有可能从 token 流之类的数据结构获取输入，所以这里把输入参数类型泛化。当然，多数情况我们还是考虑作为字符串的输入，所以我们的主角是 <code>CharParser</code> 类型：</p>
+<p>注意，我们为 parser 增加了一个类型参数 <code>s</code>。这是因为一个 parser 不一定从字符串获取输入，也有可能从 token 流之类的数据结构获取输入，所以这里把输入参数类型泛化。当然，多数情况我们还是考虑作为字符串的输入，所以我们的主角是 <code>CharParser</code> 类型：</p>
 <figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">type</span> <span class="type">CharParser</span> = <span class="type">Parsec</span> <span class="type">Char</span></span></span><br></pre></td></tr></table></figure>
 <p><code>Functor</code>、<code>Applicative</code>、<code>Monad</code> 的实现都是平凡的，这里直接贴出代码：</p>
 <figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">instance</span> <span class="type">Functor</span> (<span class="type">Parsec</span> <span class="title">s</span>) <span class="keyword">where</span></span></span><br><span class="line">  fmap f (<span class="type">Parsec</span> p) = <span class="type">Parsec</span> $ \input -&gt; <span class="keyword">case</span> p input <span class="keyword">of</span></span><br><span class="line">    (input, <span class="type">Left</span> a) -&gt; (input, <span class="type">Left</span> a)</span><br><span class="line">    (input, <span class="type">Right</span> b) -&gt; (input, <span class="type">Right</span> (f b))</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">instance</span> <span class="type">Applicative</span> (<span class="type">Parsec</span> <span class="title">s</span>) <span class="keyword">where</span></span></span><br><span class="line">  pure a = <span class="type">Parsec</span> $ \input -&gt; (input, <span class="type">Right</span> a)</span><br><span class="line">  <span class="type">Parsec</span> p &lt;*&gt; <span class="type">Parsec</span> q = <span class="type">Parsec</span> $ \input -&gt; <span class="keyword">case</span> p input <span class="keyword">of</span></span><br><span class="line">    (input, <span class="type">Left</span> a) -&gt; (input, <span class="type">Left</span> a)</span><br><span class="line">    (input, <span class="type">Right</span> f) -&gt; <span class="keyword">case</span> q input <span class="keyword">of</span></span><br><span class="line">      (input, <span class="type">Left</span> a) -&gt; (input, <span class="type">Left</span> a)</span><br><span class="line">      (input, <span class="type">Right</span> b) -&gt; (input, <span class="type">Right</span> (f b))</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">instance</span> <span class="type">Monad</span> (<span class="type">Parsec</span> <span class="title">s</span>) <span class="keyword">where</span></span> </span><br><span class="line">  return = pure</span><br><span class="line">  <span class="type">Parsec</span> p &gt;&gt;= f = <span class="type">Parsec</span> $ \input -&gt; <span class="keyword">case</span> p input <span class="keyword">of</span></span><br><span class="line">    (input, <span class="type">Left</span> a) -&gt; (input, <span class="type">Left</span> a)</span><br><span class="line">    (input, <span class="type">Right</span> b) -&gt; runParser (f b) input</span><br></pre></td></tr></table></figure>
@@ -495,7 +495,7 @@
               
                 <a href="/archives/%7C%7C%20archive">
               
-                  <span class="site-state-item-count">15</span>
+                  <span class="site-state-item-count">16</span>
                   <span class="site-state-item-name">posts</span>
                 </a>
               </div>
@@ -561,7 +561,7 @@
 
     <footer id="footer" class="footer">
       <div class="footer-inner">
-        <div class="copyright">&copy; <span itemprop="copyrightYear">2023</span>
+        <div class="copyright">&copy; <span itemprop="copyrightYear">2024</span>
   <span class="with-love">
     <i class="fa fa-user"></i>
   </span>
