@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="本文涉及到的技术 distributed futures 以 Ray 和 futures 为基础。关于 Ray，可以阅读其论文或查阅官网获得相关信息；关于 futures，可以阅读我之前的博客以及其参考资料。当然，如果你不了解它们也不会对阅读本文有很大影响。 今天分享的技术来自于 Stephanie Wang 的两篇论文：  In Reference to RPC: It’s Time to Ad">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分布式的未来">
+<meta property="og:url" content="http://example.com/2022/09/28/%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="本文涉及到的技术 distributed futures 以 Ray 和 futures 为基础。关于 Ray，可以阅读其论文或查阅官网获得相关信息；关于 futures，可以阅读我之前的博客以及其参考资料。当然，如果你不了解它们也不会对阅读本文有很大影响。 今天分享的技术来自于 Stephanie Wang 的两篇论文：  In Reference to RPC: It’s Time to Ad">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="http://example.com/%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/example.png">
+<meta property="og:image" content="http://example.com/%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/api.png">
+<meta property="og:image" content="http://example.com/%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/object.png">
+<meta property="og:image" content="http://example.com/%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/table.png">
+<meta property="article:published_time" content="2022-09-28T08:03:47.000Z">
+<meta property="article:modified_time" content="2025-06-26T03:10:05.463Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="distributed-system">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="http://example.com/%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/example.png">
+
+
+<link rel="canonical" href="http://example.com/2022/09/28/%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2022/09/28/%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/","path":"2022/09/28/分布式的未来/","title":"分布式的未来"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>分布式的未来 | Hexo</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Hexo</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#RPC-%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">RPC 的问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E4%BC%98%E5%8C%96"><span class="nav-number">2.</span> <span class="nav-text">简单优化</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%BC%96%E7%A8%8B%E6%8E%A5%E5%8F%A3"><span class="nav-number">3.</span> <span class="nav-text">编程接口</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%8D%E5%8F%AF%E5%8F%98%E6%80%A7"><span class="nav-number">4.</span> <span class="nav-text">不可变性</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86"><span class="nav-number">5.</span> <span class="nav-text">内存管理</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">John Doe</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">18</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/09/28/%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="John Doe">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="分布式的未来 | Hexo">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          分布式的未来
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2022-09-28 16:03:47" itemprop="dateCreated datePublished" datetime="2022-09-28T16:03:47+08:00">2022-09-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2025-06-26 11:10:05" itemprop="dateModified" datetime="2025-06-26T11:10:05+08:00">2025-06-26</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>本文涉及到的技术 distributed futures 以 Ray 和 futures 为基础。关于 Ray，可以阅读<a target="_blank" rel="noopener" href="https://www.usenix.org/system/files/osdi18-moritz.pdf">其论文</a>或查阅<a target="_blank" rel="noopener" href="https://www.ray.io/">官网</a>获得相关信息；关于 futures，可以阅读<a target="_blank" rel="noopener" href="https://milky2018.github.io/2022/04/29/%E7%94%A8-Future-%E5%A4%84%E7%90%86%E5%BC%82%E6%AD%A5%E9%80%BB%E8%BE%91-%E5%82%BB%E7%93%9C%E7%89%88/">我之前的博客</a>以及其参考资料。当然，如果你不了解它们也不会对阅读本文有很大影响。</p>
+<p>今天分享的技术来自于 Stephanie Wang 的两篇论文：</p>
+<ul>
+<li>In Reference to RPC: It’s Time to Add Distributed Memory</li>
+<li>Ownership: A Distributed Futures System for Fine-Grained Tasks</li>
+</ul>
+<p>两篇文章基本上说的是同一回事，所以我只展现其最终状态。</p>
+<h1 id="RPC-的问题"><a href="#RPC-的问题" class="headerlink" title="RPC 的问题"></a>RPC 的问题</h1><p>不论我怎么理解，Wang 是这样引入她的工作的：传统的 RPC 会造成不必要的数据移动开销和阻塞问题。一般我们认为阻塞问题是编程层面的，不过这里我继续延续作者的思路：考虑一个如下的工作流程：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">a = f()</span><br><span class="line">b = f()</span><br><span class="line">c = add(a, b)</span><br></pre></td></tr></table></figure>
+
+<p>现在我们已经有能力让具体的计算发生在不同的 worker 节点，而 driver 只是作为 coordinator。于是计算的具体过程可以表示成下图：</p>
+<p><img src="/./%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/example.png" alt="image-20220928162836995"></p>
+<p>这个图中的(a)表示传统的 RPC，它至少有两个可以优化的方向：</p>
+<ul>
+<li>一共发生了5次数据移动，而其中至少有两次移动是没有必要的。在高性能计算场景或者说绝大多数分布式计算场景中（微服务除外），因为数据的体积比代码大很多，我们一般使用移动代码而非数据的方式来优化性能；</li>
+<li>每次计算都是阻塞的，driver 必须等待上一个计算完成后才开始进行下一个计算。</li>
+</ul>
+<h1 id="简单优化"><a href="#简单优化" class="headerlink" title="简单优化"></a>简单优化</h1><p>正如之前提到的，阻塞问题一般可以在客户端层面解决，即使用 futures 编程技术。这个方向可以达到简单的并行优化，结果就是(c)。</p>
+<p>而数据移动问题稍微复杂一些。理想的情况当然是(b)，总共只发生了2次数据移动。使用引用传递或称为分布式内存就可以做到这一点。其思路和我们在日常编程中传递指针是一样的。当然，在分布式场景里面我们不可能真的传递指向本地内存的指针，一些扩展性的技术可以帮我们实现这一点，例如 RDMA，或者我们可以手动管理一个类似于 Redis 的分布式缓存，把它当做分布式内存，计算完成后将计算结果存放到 Redis 中，而向下游计算节点或 driver 传递它的 key。</p>
+<p>但是，单纯使用分布式缓存有这么几个不方便的地方：</p>
+<ul>
+<li>首先我们需要修改计算的逻辑，它们需要知道参数从哪里获得，结果存放到何处</li>
+<li>我们还需要手动管理这些对象的垃圾回收</li>
+<li>存取仍然是有延迟代价的。例如(b)中发生的一次数据传递，在分布式缓存中需要先存一次再取一次，直观上延迟代价至少翻倍了</li>
+<li>尽管计算在各个节点发生，充分发挥了分布式系统的计算潜能，但对于数据密集型应用，最后的复杂可能就积压到了分布式缓存</li>
+</ul>
+<p>后面我们会看到相较于分布式缓存，ownership 解决问题的方式更彻底。</p>
+<p>最后一个图(d)就是 distributed futures 能达到的效果，既可以减少数据移动开销，也可以并行化任务。我们可以假想，要设计这样一个系统，至少需要做这么几件事：</p>
+<ul>
+<li>负责整个系统的对象管理，包括对象的远程访问和回收</li>
+<li>负责任务的调度，例如这个例子中系统怎么才能知道在哪个节点上计算 <code>f</code> 和 <code>add</code> 才能让总体开销最小</li>
+<li>负责容错</li>
+</ul>
+<p>关于动机，文章还说了一些融合计算的需求，简单来说就是当系统很庞大时，传统的各个组件通信的方式是通过 RPC，而 distributed futures 就可以用同样的思路让 RPC 变得非常高效。这也是 Ray 正在推行的概念，即让整个系统的各个组件都在 Ray 下编写、部署，最终就会使得系统的管理变得很容易，性能更高。但我认为这是不太可能的事情，原因你自己去思考，什么都跟你讲得明明白白你就不能成长。</p>
+<p>接下来我们具体看看 distributed futures 怎么减少数据移动和并行化。</p>
+<h1 id="编程接口"><a href="#编程接口" class="headerlink" title="编程接口"></a>编程接口</h1><p>首先是并行化，正如我之前说过的，使用 futures 就可以实现。Ownership 在实现上也提供了 asyncio 接口，但不用 asyncio 也可以，因为 Python 本来也支持多线程（你好，GIL）和阻塞 API。</p>
+<p>接口是这样的：</p>
+<p><img src="/./%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/api.png" alt="image-20220928170418042"></p>
+<p>这和最早 Ray 在论文中提到的 API 有些差别，而事实上 Ray 现在也没有采用这里的 <code>shared</code> 和 <code>del</code>。另外，Actor 相关的事情我想放到后面再说，所以忘了这张图吧，看我的极简版描述：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">remote : (f : a -&gt; b) -&gt; DFut a -&gt; DFut b</span><br><span class="line">get : DFut a -&gt; a </span><br></pre></td></tr></table></figure>
+
+<p><code>remote</code> 可以让一个函数变成远程函数，从而可以远程执行；而远程函数执行的参数和返回值都是引用，也就是 DFut 类型。在真正的实现中，如果传参是值，则会自动包装成 DFut。下面是一个可以直接运行的 Python 例子（注释可以暂时跳过）：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> ray </span><br><span class="line"></span><br><span class="line">ray.init() <span class="comment"># 这一步在最新版的 ray 中可以省略</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@ray.remote </span><span class="comment"># 这个装饰器相当于 f = ray.remote(f)，将 f 变成远程函数即 task</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">f</span>(): </span><br><span class="line">  <span class="keyword">return</span> <span class="number">10</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@ray.remote</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">add</span>(<span class="params">a, b</span>)</span><br><span class="line">	<span class="keyword">return</span> a + b <span class="comment"># 参数不需要手动解引用</span></span><br><span class="line"></span><br><span class="line">a = f.remote() <span class="comment"># a 只是一个引用，当然我们知道引用指向值10</span></span><br><span class="line">b = f.remote() </span><br><span class="line">c = add.remote(a, b) <span class="comment"># 传入两个引用作为参数</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(ray.get(c)) <span class="comment"># 这一步会真正开始运算并阻塞，直到获得结果，打印出`20`</span></span><br></pre></td></tr></table></figure>
+
+<p>为了和普通的函数区分，Ray 特意要求必须以 <code>f.remote()</code> 的形式才能调用函数，否则直接写 <code>f()</code> 会报错。</p>
+<p>这段代码最重要的特点在于第15行参数隐式解引用，这使得函数可以几乎无痛地转变为远程函数，从而轻松地利用分布式计算资源。13~15这三行代码构建了一个计算图，只有当最后需要结果的时候，才会真正开始执行整个计算图。这其实就是延迟求值。对于 Ray 的场景而言，延迟求值的最大好处就是有充足的信息和时间可以用来编排任务和优化计算图。</p>
+<p>作为优化的一个例子，上述计算流程中，15行的 <code>add</code> 依赖于前两行的计算结果，而13行和14行则没有依赖关系。因此，让13行和14行的计算并行执行在两个节点（或者，一个多核的 worker）上，减少时间；<code>add</code> 的计算则可以复用前一个 <code>f</code> 的计算节点，减少一次数据移动。</p>
+<p>为什么要延迟求值呢？其实，什么时候求值并不会影响整个程序的语义，函数调用返回的都是 DFut。延迟求值只是一种实现，这个地方实现成非延迟也是可以的。第13行代码执行后 <code>f</code> 的计算就在别的节点上异步地开始进行了，还是到第17行才由依赖图点火执行，对 driver 程序是透明的。Ray 的选择是正确的，因为求值过程发生得越晚，优化的空间就越大。举一个极端的例子：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">x = f()</span><br><span class="line">y = g()</span><br><span class="line">ray.get(y)</span><br></pre></td></tr></table></figure>
+
+<p>最后的结果没有用到 <code>f</code> 的执行结果，所以第一行代码是可有可无的（Ray 的 task 是没用副作用的），而延迟求值策略就可以通过依赖图避免执行第一行代码造成的性能损失。</p>
+<p>延迟求值有这么几个常见的劣势：难以调试和反复确认计算结果的性能损失。</p>
+<p>难以调试是因为代码执行的时空和计算真实发生的时空不一样，没法以传统的方式打断点调试。这个问题只能通过扩展调试手段来解决了。</p>
+<p>性能损失主要是指，延迟求值在使用每一个值的时候，需要先确认这个值是否已经求值了，如果求值了就直接使用，否则就点火它的求值过程。考虑到 Ray 程序的 task 仍然有一定粒度，相比起执行一个 task 的代码传输、任务图编排、数据传输来说，确认的时间可以忽略不计。</p>
+<h1 id="不可变性"><a href="#不可变性" class="headerlink" title="不可变性"></a>不可变性</h1><p>或许你已经注意到了，Ray 不支持形如 <code>set(k, v)</code> 的状态修改操作。文章中提及了一个原因：为了保持和传统 pass-by-value 的 RPC 语义一致。这个原因是相当次要的，主要原因是下面四个：可变性和延迟求值冲突了，可变性导致数据竞争，可变性和 actor 语义冲突了，可变性和自动垃圾回收冲突了。</p>
+<p>前面我们说，延迟求值只是一种求值策略，不会改变语义。但如果允许多个 task 同时访问某个对象，task 运行的时间就成了问题。</p>
+<p>数据竞争比较好理解，允许多个正在执行的任务修改同一个对象，就意味着并发问题。不可变性直接避免了并发问题的发生。</p>
+<p>由于 actor 和 distributed futures 本身关联不大，我特意没有提及。简单来说，Ray 支持有状态的 actor 计算而不仅仅是 task，而 actor 的消息传递模型要求消息内容不可变。</p>
+<p>自动垃圾回收，也就是自动内存管理，在下面将会详细介绍。<code>set(k, v)</code> 形式的操作隐含地假设了一个全局存在的键值存储，只要不显式地删掉某个键，它就应该能被访问。因此在所有任务执行完成前，没有任何对象是可以回收的。</p>
+<h1 id="内存管理"><a href="#内存管理" class="headerlink" title="内存管理"></a>内存管理</h1><p>Ownership 的对象存放在各个节点的 object store 上，运行 object store 的节点和计算节点是不做区分的。我仍然用这个例子来解释中间发生的内存管理过程：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">a = f()</span><br><span class="line">b = f()</span><br><span class="line">c = add(a, b)</span><br><span class="line">get(c)</span><br></pre></td></tr></table></figure>
+
+<p>Object store 提供了类似 kv 的操作接口，如下：</p>
+<p><img src="/./%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/object.png" alt="image-20220929171013313"></p>
+<p>结合这些 API，我们完整地过一遍：</p>
+<ol>
+<li>前三行代码构建计算图，第四行代码开始，对 <code>c</code> 发起 <code>get</code> 操作，这一操作会被转换为上图中的 <code>Get(c)</code> </li>
+<li><code>Get(c)</code> 会找到一个空值，该空值和一个 task 关联，从而触发 <code>c = add(a, b)</code> 这个 task 的执行，假设这个 task 被调度到 N0 执行</li>
+<li>同样的方式，<code>Get(a)</code> 和 <code>Get(b)</code> 会触发 <code>a = f()</code> 和 <code>b = f()</code> 这两个 tasks 的执行</li>
+<li>执行 <code>a = f()</code> 这一 task 的节点 N1 会在自己的 ownership table 中保存一个 ObjectID 为 <code>a</code> 的映射，内容包含其值（现在是空）、其 owner N1、其 reference N0 和 N1</li>
+<li>当这个 task 执行完毕后，N1 调用 <code>Create(a, 10)</code>，将表中的空值部分填充为10（当数据量很大时，这里填充一个指向 object store 的指针）</li>
+<li>随后，如果这个值很大，需要存储道 object store 中，N1 会调用 <code>Pin(a, N1)</code>，指将这个值钉在这个第一次产生它的节点，防止其移动。为了降低访问延迟，Ownership 会在必要的时候复制某些对象，而复制对象就只会调用 <code>Create</code>，不会调用 <code>Pin</code>，只有当任务第一次产生对象时才会调用 <code>Pin</code>。当内存不够用时，那些没有被钉住的对象就会被释放，而钉住的都是最初始的副本，不会被释放，否则会造成对象丢失</li>
+<li>接下来，由于 <code>a = f()</code> 这一 task 完全执行完了，所以在 ownership table 的 <code>a</code> 这一行中把 N1 从 references 列表删除。现在 reference 只剩 N0</li>
+<li><code>Get(a)</code> 返回，10作为值被传送到 N0 节点上。大概就在差不多的时间，<code>Get(b)</code> 也返回了，此时 N0 同时有了 <code>a</code> 和 <code>b</code> 的值</li>
+<li><code>c = add(a, b)</code> 发生，ownership table 的创建、<code>Create</code> 和 <code>Pin</code> 的调用也和上述过程如出一辙</li>
+<li>最后，由于这个 task 执行完了，N0 不再 refer to <code>a</code> 和 <code>b</code>，所以两个 table 中 N0 会从 references 列表删除</li>
+<li>当一个对象的 references 的列表为空时，调用 <code>Release(a)</code>，这个 table 的记录被删除，object store 的相应内存被释放</li>
+<li>最终 <code>Get(c)</code> 返回，同样的释放逻辑再执行一遍</li>
+</ol>
+<p>这里我还忽略了一些细节，比如这个表单的完整内容：</p>
+<p><img src="/./%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/table.png" alt="image-20220929174236603"></p>
+<p>只有 owner 节点才会持有表单的完整条目，而其它的对象借用者只持有前四项。</p>
+<p>整体上看，Ownership 就是一个分布式的引用计数。说到引用计数，你可能立刻会想到环状引用问题。但不用担心，Ray 的对象都是不可变的，意味着你不可能制造出环形的数据结构，所有的对象一定是树状组织的。</p>
+<p>后续有空再讲容错。</p>
+<p>（本文定价1元）</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/distributed-system/" rel="tag"># distributed-system</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/08/17/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" rel="prev" title="分布式锁">
+                  <i class="fa fa-angle-left"></i> 分布式锁
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/10/25/%E8%AF%91Process-as-a-Service-FaaSt-Stateful-Computing-with-Optimized-Data-Planes/" rel="next" title="译Process-as-a-Service: FaaSt Stateful Computing with Optimized Data Planes">
+                  译Process-as-a-Service: FaaSt Stateful Computing with Optimized Data Planes <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">John Doe</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

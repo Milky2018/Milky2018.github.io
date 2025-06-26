@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="用 Future 处理异步逻辑（傻瓜版） 很多编程语言（JavaScript, Rust, C#）都将 async&#x2F;await 作为语言内置的异步编程接口，虽然实现不同，对外表现也都大同小异。这里以 js 为例说明 async&#x2F;await 的使用动机、使用方式。  为什么 JavaScript 没有 sleep 这样的函数？   因为 JavaScript 最初仅被用于浏览器操">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用 Future 处理异步逻辑（胎教版）">
+<meta property="og:url" content="http://example.com/2022/04/29/%E7%94%A8-Future-%E5%A4%84%E7%90%86%E5%BC%82%E6%AD%A5%E9%80%BB%E8%BE%91-%E5%82%BB%E7%93%9C%E7%89%88/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="用 Future 处理异步逻辑（傻瓜版） 很多编程语言（JavaScript, Rust, C#）都将 async&#x2F;await 作为语言内置的异步编程接口，虽然实现不同，对外表现也都大同小异。这里以 js 为例说明 async&#x2F;await 的使用动机、使用方式。  为什么 JavaScript 没有 sleep 这样的函数？   因为 JavaScript 最初仅被用于浏览器操">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2022-04-29T07:44:24.000Z">
+<meta property="article:modified_time" content="2025-06-26T03:10:05.470Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="programming-language">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/2022/04/29/%E7%94%A8-Future-%E5%A4%84%E7%90%86%E5%BC%82%E6%AD%A5%E9%80%BB%E8%BE%91-%E5%82%BB%E7%93%9C%E7%89%88/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2022/04/29/%E7%94%A8-Future-%E5%A4%84%E7%90%86%E5%BC%82%E6%AD%A5%E9%80%BB%E8%BE%91-%E5%82%BB%E7%93%9C%E7%89%88/","path":"2022/04/29/用-Future-处理异步逻辑-傻瓜版/","title":"用 Future 处理异步逻辑（胎教版）"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>用 Future 处理异步逻辑（胎教版） | Hexo</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Hexo</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Promise-%E5%8A%A8%E6%9C%BA"><span class="nav-number">1.</span> <span class="nav-text">Promise 动机</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#await"><span class="nav-number">2.</span> <span class="nav-text">await</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#async"><span class="nav-number">3.</span> <span class="nav-text">async</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Promise-%E7%8A%B6%E6%80%81"><span class="nav-number">4.</span> <span class="nav-text">Promise 状态</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Promise-all"><span class="nav-number">5.</span> <span class="nav-text">Promise.all</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#await-%E8%A7%A3%E5%86%B3-point-free-%E7%9A%84%E5%BC%8A%E7%AB%AF"><span class="nav-number">6.</span> <span class="nav-text">await 解决 point free 的弊端</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A8%A1%E6%8B%9F%E4%B8%80%E4%B8%AA-sleep-%E5%87%BD%E6%95%B0"><span class="nav-number">7.</span> <span class="nav-text">模拟一个 sleep 函数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Promise-monad"><span class="nav-number">8.</span> <span class="nav-text">Promise monad</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8A%A8%E8%84%91%E7%AD%8B"><span class="nav-number">9.</span> <span class="nav-text">动脑筋</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">10.</span> <span class="nav-text">参考</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">John Doe</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">18</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2022/04/29/%E7%94%A8-Future-%E5%A4%84%E7%90%86%E5%BC%82%E6%AD%A5%E9%80%BB%E8%BE%91-%E5%82%BB%E7%93%9C%E7%89%88/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="John Doe">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="用 Future 处理异步逻辑（胎教版） | Hexo">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          用 Future 处理异步逻辑（胎教版）
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2022-04-29 15:44:24" itemprop="dateCreated datePublished" datetime="2022-04-29T15:44:24+08:00">2022-04-29</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2025-06-26 11:10:05" itemprop="dateModified" datetime="2025-06-26T11:10:05+08:00">2025-06-26</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><p>用 Future 处理异步逻辑（傻瓜版）</p>
+<p>很多编程语言（JavaScript, Rust, C#）都将 async&#x2F;await 作为语言内置的异步编程接口，虽然实现不同，对外表现也都大同小异。这里以 js 为例说明 async&#x2F;await 的使用动机、使用方式。</p>
+<blockquote>
+<p>为什么 JavaScript 没有 sleep 这样的函数？</p>
+</blockquote>
+<blockquote>
+<p>因为 JavaScript 最初仅被用于浏览器操作 DOM，是单线程的。首先单线程程序没有 sleep 的必要，其次，设想某个程序组件调用了 sleep，将导致整个浏览器卡死在这里，是不是很恐怖？</p>
+</blockquote>
+<p>这篇博客最初是用来在实验室小组内10分钟为同事们普及 JavaScript Promise 编程概念而写的，所以没有涉及任何有难度的 PL 知识和实现层面的细节。</p>
+<h1 id="Promise-动机"><a href="#Promise-动机" class="headerlink" title="Promise 动机"></a>Promise 动机</h1><p>阻塞无处不在。假设我们需要请求一个网页的内容，并对这个内容进行打印输出，一个普通的同步 API 是这个样子的：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> resp = <span class="title function_">fetch</span>(<span class="string">&#x27;www.some.resource&#x27;</span>);</span><br><span class="line"><span class="keyword">let</span> data = resp.<span class="title function_">json</span>();</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(data);</span><br><span class="line"><span class="comment">// do other stuff</span></span><br></pre></td></tr></table></figure>
+
+<p>但是网络请求是一个 IO 操作，很容易就发生阻塞。JavaScript 是单线程的，我们没有办法开一个线程来单独处理这部分逻辑，所以我们经常看见在 JavaScript 中，这种可能阻塞的 API 都被设计成这样：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">fetch</span>(<span class="string">&#x27;www.some.resource&#x27;</span>, <span class="function">(<span class="params">resp</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> data = resp.<span class="title function_">json</span>();</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(data);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line"><span class="comment">// do other stuff</span></span><br></pre></td></tr></table></figure>
+
+<p>这样，我们不需要考虑这个网页的内容什么时候真正被请求到，我们通过传递一个回调函数来表达这样的逻辑：当这个内容被请求到后，它将作为参数执行以下逻辑。这样，fetch 操作不会阻塞当前线程，却完成了以往多线程才能完成的任务。</p>
+<blockquote>
+<p>fetch 的第二个参数叫 continuation，意思是某个操作的后续操作。continuation 一般都以单参数的函数表达，参数就是表达式的求值结果。</p>
+</blockquote>
+<p>这样的代码有一个缺点，就是可能造成回调地狱，例如我希望在请求到网页结果后，根据结果内容再发出新的请求，代码可能变成这个样子：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">fetch</span>(<span class="string">&#x27;someURL&#x27;</span>, <span class="function">(<span class="params">resp</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> data = resp.<span class="title function_">json</span>();</span><br><span class="line">  <span class="title function_">fetch</span>(data[<span class="string">&#x27;img&#x27;</span>], <span class="function">(<span class="params">resp</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">let</span> data = resp.<span class="title function_">json</span>();</span><br><span class="line">    <span class="title function_">fetch</span>(data[<span class="string">&#x27;addr&#x27;</span>], <span class="function">(<span class="params">resp</span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">let</span> data = resp.<span class="title function_">json</span>();</span><br><span class="line">      <span class="variable language_">console</span>.<span class="title function_">log</span>(data);</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>这样的代码，想要换一下执行顺序，修改起来太麻烦了，读起来也很难受，错误处理也很困难。这也是为什么后来的 API 都尽量设计成 Promise 返回值：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> respPromise = <span class="title function_">fetch</span>(<span class="string">&#x27;someURL&#x27;</span>);</span><br><span class="line">respPromise.<span class="title function_">then</span>(<span class="function">(<span class="params">resp</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">let</span> data = resp.<span class="title function_">json</span>();</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(data);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+
+<p>Promise 对象的 <code>then</code> 方法允许我们定义 promise 的后续操作。<code>then</code> 的返回值也是一个 Promise，即包裹了回调函数的返回值的 Promise。所以前面的回调地狱就可以改写成如下形式：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">fetch</span>(<span class="string">&#x27;someURL&#x27;</span>)</span><br><span class="line">  .<span class="title function_">then</span>(<span class="function">(<span class="params">resp</span>) =&gt;</span> <span class="title function_">fetch</span>(resp.<span class="title function_">json</span>()[<span class="string">&#x27;img&#x27;</span>]))</span><br><span class="line">  .<span class="title function_">then</span>(<span class="function">(<span class="params">resp</span>) =&gt;</span> <span class="title function_">fetch</span>(resp.<span class="title function_">json</span>()[<span class="string">&#x27;addr&#x27;</span>]))</span><br><span class="line">  .<span class="title function_">then</span>(<span class="variable language_">console</span>.<span class="property">log</span>);</span><br></pre></td></tr></table></figure>
+
+<p>这样嵌套的函数就变成了顺序的，代码简洁多了。</p>
+<h1 id="await"><a href="#await" class="headerlink" title="await"></a>await</h1><p>JavaScript 提供了更加简单的操作 Promise 对象的语法糖。在上述例子中，使用 <code>await</code> 关键字可以让整个程序成为近乎命令式。例如，对于一个包含了字符串的 Promise，<code>await</code> 操作符能返回一个字符串：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> stringPromise = <span class="title class_">Promise</span>.<span class="title function_">resolve</span>(<span class="string">&#x27;some string&#x27;</span>);</span><br><span class="line"><span class="keyword">let</span> s = <span class="keyword">await</span> stringPromise;</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(s);</span><br></pre></td></tr></table></figure>
+
+<p>这段代码等价于：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">Promise</span>.<span class="title function_">resolve</span>(<span class="string">&#x27;some string&#x27;</span>)</span><br><span class="line">  .<span class="title function_">then</span>(<span class="function">(<span class="params">s</span>) =&gt;</span> <span class="variable language_">console</span>.<span class="title function_">log</span>(s));</span><br><span class="line"><span class="comment">// or more succinct</span></span><br><span class="line"><span class="title class_">Promise</span>.<span class="title function_">resolve</span>(<span class="string">&#x27;some string&#x27;</span>).<span class="title function_">then</span>(<span class="variable language_">console</span>.<span class="property">log</span>);</span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>await</code> 来重写上述回调地狱：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> resp1 = <span class="keyword">await</span> <span class="title function_">fetch</span>(<span class="string">&#x27;someURL&#x27;</span>); </span><br><span class="line"><span class="keyword">let</span> imgURL = resp.<span class="title function_">json</span>()[<span class="string">&#x27;img&#x27;</span>];</span><br><span class="line"><span class="keyword">let</span> resp2 = <span class="keyword">await</span> <span class="title function_">fetch</span>(imgURL);</span><br><span class="line"><span class="keyword">let</span> dataURL = img.<span class="title function_">json</span>()[<span class="string">&#x27;addr&#x27;</span>];</span><br><span class="line"><span class="keyword">let</span> resp3 = <span class="keyword">await</span> <span class="title function_">fetch</span>(dataURL);</span><br><span class="line"><span class="keyword">let</span> data = resp3.<span class="title function_">json</span>();</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(data);</span><br></pre></td></tr></table></figure>
+
+<p>直觉上，<code>await</code> 操作就像阻塞，直到后续异步操作返回结果。但事实上，<code>await</code> 只是语法糖，这段代码和上述使用 <code>then</code> 的代码是完全等价的。</p>
+<blockquote>
+<p><code>await</code> 操作符后的表达式如果不是 Promise，就返回表达式的值本身。</p>
+</blockquote>
+<h1 id="async"><a href="#async" class="headerlink" title="async"></a>async</h1><p>以上包含 <code>await</code> 的代码是不能直接执行的。在语言规范上，<code>await</code> 只能使用在 <code>async</code> 函数内（top-level await 因为诸多问题被单独标准化，而且引起了很激烈的后续讨论：<a target="_blank" rel="noopener" href="https://gist.github.com/Rich-Harris/0b6f317657f5167663b493c722647221">Top-level await is a footgun</a>）。上述代码要被包裹在一个函数内部：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">main</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">let</span> resp1 = <span class="keyword">await</span> <span class="title function_">fetch</span>(<span class="string">&#x27;someURL&#x27;</span>); </span><br><span class="line">  <span class="keyword">let</span> imgURL = resp.<span class="title function_">json</span>()[<span class="string">&#x27;img&#x27;</span>];</span><br><span class="line">  <span class="keyword">let</span> resp2 = <span class="keyword">await</span> <span class="title function_">fetch</span>(imgURL);</span><br><span class="line">  <span class="keyword">let</span> dataURL = img.<span class="title function_">json</span>()[<span class="string">&#x27;addr&#x27;</span>];</span><br><span class="line">  <span class="keyword">let</span> resp3 = <span class="keyword">await</span> <span class="title function_">fetch</span>(dataURL);</span><br><span class="line">  <span class="keyword">let</span> data = resp3.<span class="title function_">json</span>();</span><br><span class="line">  <span class="keyword">return</span> data;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>为了凸显 <code>async</code> 的某些特点，我们去掉了打印操作，而是将结果字符串返回。async 函数和普通的 JavaScript 函数没什么不同，可以当作普通函数直接使用。但是，有两点需要注意：</p>
+<ol>
+<li><code>await</code> 只能在 async 函数中使用</li>
+<li>async 函数的返回值是 Promise，如果不是 Promise 会被自动包裹到 Promise</li>
+<li>（其实 async 函数的类型和普通函数也有区别，并且不能使用 <code>new</code> 来创建对象。这已经不重要了，现在很少有人会用函数来做构造函数）</li>
+</ol>
+<p>第二点很好理解，因为 async 函数是异步逻辑，返回值本来就应当是 Promise。但为什么 <code>await</code> 被限制在 async 函数中呢？因为“等待异步操作”的函数必须也是异步的。这也是异步函数的一个潜在问题：传染性，一旦一个地方用了异步操作，再想变回同步就不可能了。</p>
+<blockquote>
+<p>async 仅仅只是一个给程序员看的标记，表示这是个异步函数，它可以等待其它异步函数的执行结果，让程序员清楚地知道这个函数在执行时需要让出线程，不能被当作同步函数使用。理论上来说 async 没有增强语言的表达能力。</p>
+</blockquote>
+<h1 id="Promise-状态"><a href="#Promise-状态" class="headerlink" title="Promise 状态"></a>Promise 状态</h1><p>Promise 对象有三个状态：Pending, Fulfilled, Rejected. </p>
+<p>一个 Promise 被创建时是 pending 状态；执行成功后变成 fulfilled 状态，触发 <code>resolve</code> 回调；执行失败后变成 rejected 状态，触发 <code>reject</code> 回调。例子：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="title function_">fetch</span>(<span class="string">&#x27;someURL&#x27;</span>).</span><br><span class="line">  .<span class="title function_">then</span>(<span class="function"><span class="params">resp</span> =&gt;</span> <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;Success&#x27;</span>))</span><br><span class="line">  .<span class="title function_">catch</span>(<span class="function"><span class="params">err</span> =&gt;</span> <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&#x27;Failed&#x27;</span>));</span><br></pre></td></tr></table></figure>
+
+<p>当 <code>fetch</code> 操作失败后，就会进入 rejected 状态并打印 <code>Failed</code>。</p>
+<h1 id="Promise-all"><a href="#Promise-all" class="headerlink" title="Promise.all"></a>Promise.all</h1><p>考虑这样一个场景：<code>urls</code> 是一个包含了10个 URL 的数组，我们想要对每一个 URL 都执行 fetch 操作，但又不希望它们相互等待。如果 fetch 一个资源的时间是0.1s，那么同时 fetch 10个资源的时间应当也是0.1s而不是1s。我们可以这样编写程序：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> results = <span class="keyword">await</span> <span class="title class_">Promise</span>.<span class="title function_">all</span>(urls.<span class="title function_">map</span>(fetch));</span><br></pre></td></tr></table></figure>
+
+<p><code>Promise.all</code> 等待数组内所有 Promise 都变成 fulfilled 状态，就变成 fulfilled 状态，其值即为原数组内 Promise 对应的值构成的数组。如果其中任何一个 rejected，则该 Promise 也进入 rejected 状态。</p>
+<p><code>Promise.race</code> 也等待数组，行为是对偶的。只要数组内有任何一个元素 fulfiiled，就变成 fulfilled 状态并返回该元素的值；如果所有元素都 rejected，则进入 rejected. </p>
+<h1 id="await-解决-point-free-的弊端"><a href="#await-解决-point-free-的弊端" class="headerlink" title="await 解决 point free 的弊端"></a>await 解决 point free 的弊端</h1><p>命令式编程的一个好处是几乎拥有一个无限平坦的 environment（变量名-值映射）。我们可以编写这样的程序：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="title function_">main</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">let</span> x = <span class="keyword">await</span> <span class="title function_">f</span>();</span><br><span class="line">  <span class="keyword">let</span> y = <span class="keyword">await</span> <span class="title function_">g</span>(x);</span><br><span class="line">  <span class="keyword">let</span> z = <span class="keyword">await</span> <span class="title function_">h</span>(x, y);</span><br><span class="line">  <span class="keyword">return</span> z;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果没有 <code>await</code>，程序该怎么写？</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">main</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="title function_">f</span>()</span><br><span class="line">    .<span class="title function_">then</span>(g)</span><br><span class="line">    .&lt;?&gt;</span><br><span class="line"> &#125;</span><br></pre></td></tr></table></figure>
+
+<p>写到 <code>?</code> 处就卡住了，因为此时 <code>x</code> 的值已经丢失，只剩下 <code>g(x)</code>。要想把 <code>x</code> 的值保留下来只能利用数组和 <code>Promise.all</code>：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">main</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="title function_">f</span>()</span><br><span class="line">    .<span class="title function_">then</span>(<span class="function"><span class="params">x</span> =&gt;</span> <span class="title class_">Promise</span>.<span class="title function_">all</span>([x, <span class="title function_">g</span>(x)]))</span><br><span class="line">    .<span class="title function_">then</span>(<span class="function"><span class="params">arr</span> =&gt;</span> <span class="title function_">h</span>(arr[<span class="number">0</span>], arr[<span class="number">1</span>]));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>和 <code>await</code> 版本比起来非常地不方便。</p>
+<h1 id="模拟一个-sleep-函数"><a href="#模拟一个-sleep-函数" class="headerlink" title="模拟一个 sleep 函数"></a>模拟一个 sleep 函数</h1><p>有了以上能力，写一个 sleep 函数就容易得多了。JavaScript 的运行时支持我们将任务塞到事件循环的队列，于是我们可以利用 <code>setTimeout</code> 来做定时任务：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">setTimeout</span>(<span class="keyword">function</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;Hi&quot;</span>);</span><br><span class="line">&#125;, <span class="number">1000</span>);</span><br></pre></td></tr></table></figure>
+
+<p>这行代码执行的1s后将会打印 <code>Hi</code> 字样。依据此功能，我们可以编写如下函数来模拟 <code>sleep</code> 的行为了：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">sleep</span>(<span class="params">time</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Promise</span>(<span class="function">(<span class="params">resolve</span>) =&gt;</span> <span class="built_in">setTimeout</span>(resolve, time));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">await</span> <span class="title function_">sleep</span>(<span class="number">1000</span>);</span><br><span class="line"><span class="variable language_">console</span>.<span class="title function_">log</span>(<span class="string">&quot;Hi&quot;</span>);</span><br></pre></td></tr></table></figure>
+
+<h1 id="Promise-monad"><a href="#Promise-monad" class="headerlink" title="Promise monad"></a>Promise monad</h1><p>很容易看出 Promise 是一个 monad。其 <code>then</code> 操作正是 <code>map</code> 和 <code>flatMap</code> （在不同语言中也表示为 <code>bind</code> 或是 <code>&gt;&gt;=</code> 等名字）的合体。此处不做严格证明，注意到显然 <code>Promise.resolve</code> 就是 <code>pure</code> （也表示为 <code>return</code>）和 <code>then</code> 的类型就可以了。</p>
+<blockquote>
+<p>什么是 monad？</p>
+</blockquote>
+<blockquote>
+<p>monad（单子）即自函子范畴上的幺半群（雾）。</p>
+</blockquote>
+<p>考虑到 <code>resolve</code> 回调的返回值如果不是 Promise 则会自动转为 Promise，所以分两种情况讨论。</p>
+<p>当 resolve 回调的返回值不是 Promise：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">then : </span><br><span class="line">  &#123;<span class="variable language_">this</span> : <span class="title class_">Promise</span>&lt;A&gt;&#125; -&gt; </span><br><span class="line">  (<span class="attr">resolve</span>: A -&gt; B) -&gt;</span><br><span class="line">  <span class="title class_">Promise</span>&lt;B&gt;</span><br></pre></td></tr></table></figure>
+
+<p>和 <code>map</code> 的类型一致。</p>
+<p>当 resolve 回调的返回值是 Promise：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">then : </span><br><span class="line">  &#123;<span class="variable language_">this</span> : <span class="title class_">Promise</span>&lt;A&gt;&#125; -&gt; </span><br><span class="line">  (<span class="attr">resolve</span>: A -&gt; <span class="title class_">Promise</span>&lt;B&gt;) -&gt;</span><br><span class="line">  <span class="title class_">Promise</span>&lt;B&gt;</span><br></pre></td></tr></table></figure>
+
+<p>和 <code>flatMap</code> 的类型一致。</p>
+<p>这个视角下，<code>await</code> 即是 do notation 中的 <code>&lt;-</code> 语法糖。</p>
+<h1 id="动脑筋"><a href="#动脑筋" class="headerlink" title="动脑筋"></a>动脑筋</h1><p>最后来一个思考题，需要结合 Continuation 相关的知识。请问以下代码的输出是什么？</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">conditionalPass</span>(<span class="params"><span class="attr">n</span>: <span class="built_in">number</span></span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Promise</span>&lt;<span class="built_in">void</span>&gt;(<span class="function">(<span class="params">resolve, _reject</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="keyword">if</span> (n &lt; <span class="number">4</span> || n &gt; <span class="number">8</span>) &#123;</span><br><span class="line">      <span class="title function_">resolve</span>();</span><br><span class="line">    &#125; </span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">async</span> <span class="keyword">function</span> <span class="title function_">main</span>(<span class="params"></span>) &#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">    <span class="keyword">await</span> <span class="title function_">conditionalPass</span>(i);</span><br><span class="line">    <span class="variable language_">console</span>.<span class="title function_">log</span>(i);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="title function_">main</span>();</span><br></pre></td></tr></table></figure>
+
+<p>答案？自己在电脑上跑一遍就知道了。</p>
+<h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><p><a target="_blank" rel="noopener" href="https://tokio.rs/tokio/tutorial/async">https://tokio.rs/tokio/tutorial/async</a></p>
+<p>（本文定价1元）</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/programming-language/" rel="tag"># programming-language</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2022/04/29/I-m-coming-back/" rel="prev" title="I&#39;m coming back">
+                  <i class="fa fa-angle-left"></i> I'm coming back
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/07/26/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%89%8B%E5%86%99Parser-Combinator/" rel="next" title="从零开始手写Parser Combinator">
+                  从零开始手写Parser Combinator <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">John Doe</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

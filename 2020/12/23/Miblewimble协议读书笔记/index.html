@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="Mimblewimble协议读书笔记摘要本文介绍Mimblewimble协议的基本内容，展示协议如何隐藏信息和提高效率，描述协议在区块链系统中的应用场景和应用方式，简要介绍使用该协议的Grin和Beam区块链应用，回答“Grin和Beam中，如何处理签名私钥；怎样解决双花问题；分析对Mimblewimble协议的攻击”三个问题。本文不会涉及椭圆曲线密码的数学细节，对Grin、Beam的应用价值的评">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Miblewimble协议读书笔记">
+<meta property="og:url" content="http://example.com/2020/12/23/Miblewimble%E5%8D%8F%E8%AE%AE%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="Mimblewimble协议读书笔记摘要本文介绍Mimblewimble协议的基本内容，展示协议如何隐藏信息和提高效率，描述协议在区块链系统中的应用场景和应用方式，简要介绍使用该协议的Grin和Beam区块链应用，回答“Grin和Beam中，如何处理签名私钥；怎样解决双花问题；分析对Mimblewimble协议的攻击”三个问题。本文不会涉及椭圆曲线密码的数学细节，对Grin、Beam的应用价值的评">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-12-23T05:57:38.000Z">
+<meta property="article:modified_time" content="2025-06-26T03:10:05.437Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="blockchain">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/2020/12/23/Miblewimble%E5%8D%8F%E8%AE%AE%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2020/12/23/Miblewimble%E5%8D%8F%E8%AE%AE%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/","path":"2020/12/23/Miblewimble协议读书笔记/","title":"Miblewimble协议读书笔记"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>Miblewimble协议读书笔记 | Hexo</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/motion.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">Hexo</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="Search" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Mimblewimble%E5%8D%8F%E8%AE%AE%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0"><span class="nav-number">1.</span> <span class="nav-text">Mimblewimble协议读书笔记</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%91%98%E8%A6%81"><span class="nav-number">2.</span> <span class="nav-text">摘要</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95"><span class="nav-number">3.</span> <span class="nav-text">目录</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BC%95%E8%A8%80"><span class="nav-number">4.</span> <span class="nav-text">引言</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5"><span class="nav-number">5.</span> <span class="nav-text">基础概念</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A4%AD%E5%9C%86%E6%9B%B2%E7%BA%BF"><span class="nav-number">5.1.</span> <span class="nav-text">椭圆曲线</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Bulletproofs"><span class="nav-number">5.2.</span> <span class="nav-text">Bulletproofs</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%9E%84%E9%80%A0"><span class="nav-number">6.</span> <span class="nav-text">基本构造</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Pederson-Commitment"><span class="nav-number">6.1.</span> <span class="nav-text">Pederson Commitment</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9A%90%E8%97%8F%E4%BA%A4%E6%98%93"><span class="nav-number">6.1.1.</span> <span class="nav-text">隐藏交易</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%80%E6%9C%89%E6%9D%83"><span class="nav-number">6.1.2.</span> <span class="nav-text">所有权</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%A4%E6%98%93%E8%B4%B9"><span class="nav-number">6.2.</span> <span class="nav-text">交易费</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%8C%83%E5%9B%B4%E8%AF%81%E6%98%8E"><span class="nav-number">6.3.</span> <span class="nav-text">范围证明</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.4.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%AB%98%E7%BA%A7%E6%9E%84%E9%80%A0"><span class="nav-number">7.</span> <span class="nav-text">高级构造</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%A4%E6%98%93%E8%81%9A%E5%90%88"><span class="nav-number">7.1.</span> <span class="nav-text">交易聚合</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Cut-through"><span class="nav-number">7.2.</span> <span class="nav-text">Cut-through</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8C%BA%E5%9D%97%E9%93%BE%E7%BA%A7%E5%88%AB%E7%9A%84%E4%BC%98%E5%8C%96"><span class="nav-number">7.3.</span> <span class="nav-text">区块链级别的优化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93-1"><span class="nav-number">7.4.</span> <span class="nav-text">总结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E5%BA%94%E7%94%A8"><span class="nav-number">8.</span> <span class="nav-text">基本应用</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%97%AE%E9%A2%98"><span class="nav-number">9.</span> <span class="nav-text">问题</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%AD%BE%E5%90%8D%E7%A7%81%E9%92%A5%E7%9A%84%E5%A4%84%E7%90%86"><span class="nav-number">9.1.</span> <span class="nav-text">签名私钥的处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8C%E8%8A%B1%E9%97%AE%E9%A2%98"><span class="nav-number">9.2.</span> <span class="nav-text">双花问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AF%B9Mimblewimble%E5%8D%8F%E8%AE%AE%E7%9A%84%E6%94%BB%E5%87%BB"><span class="nav-number">9.3.</span> <span class="nav-text">对Mimblewimble协议的攻击</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E7%8C%AE"><span class="nav-number">10.</span> <span class="nav-text">参考文献</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">John Doe</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">18</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/12/23/Miblewimble%E5%8D%8F%E8%AE%AE%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="John Doe">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="Miblewimble协议读书笔记 | Hexo">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Miblewimble协议读书笔记
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2020-12-23 13:57:38" itemprop="dateCreated datePublished" datetime="2020-12-23T13:57:38+08:00">2020-12-23</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2025-06-26 11:10:05" itemprop="dateModified" datetime="2025-06-26T11:10:05+08:00">2025-06-26</time>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody"><h1 id="Mimblewimble协议读书笔记"><a href="#Mimblewimble协议读书笔记" class="headerlink" title="Mimblewimble协议读书笔记"></a>Mimblewimble协议读书笔记</h1><h1 id="摘要"><a href="#摘要" class="headerlink" title="摘要"></a>摘要</h1><p>本文介绍Mimblewimble协议的基本内容，展示协议如何隐藏信息和提高效率，描述协议在区块链系统中的应用场景和应用方式，简要介绍使用该协议的Grin和Beam区块链应用，回答“Grin和Beam中，如何处理签名私钥；怎样解决双花问题；分析对Mimblewimble协议的攻击”三个问题。本文不会涉及椭圆曲线密码的数学细节，对Grin、Beam的应用价值的评估，以及对加密货币的社会属性和发展前景的讨论。</p>
+<h1 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h1><p>[TOC]</p>
+<h1 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h1><p>比特币的交易历史是在区块链网络上公开的，任何人可以通过考察整个交易历史来追溯任何一笔交易数据。但这种基于交易的记账方式会带来比较严重的效率问题：任何人要考察一笔交易是否合法都需要检查交易的输入是否是没有被花掉的，而这可能需要追溯很多笔之前的交易；任何一笔交易都在销毁一笔之前的交易。这造成目前的所有交易中只有极小一部分是未被花掉的。</p>
+<p>这个现象会给挖矿者带来严重的效率问题——尤其是针对于没有建立受信任UTXO的新挖矿者来说；不仅如此，任何人想要完整地验证一笔交易都会花费高昂的代价。</p>
+<p>同样的原因带来的另一个危险是比特币的每一项交易的输出被用来做了什么都是暴露的，这使得交易历史可以被分析。</p>
+<p>2016年8月2日，一个匿名作者使用名字Tom Elvis Jedusor公布了Mimblewimble白皮书[^1]（与其说是白皮书，更像是一篇技术随笔）， 描述了Mimblewimble协议并抛出了一些问题；2016年10月6日，自称Andrew Poelstra的作者公布了另一篇同样名为Mimblewimble的白皮书[^2]，指出了原版白皮书中存在的一些问题，回答了原版白皮书抛出的问题，被称为“精确版”Mimblewimble白皮书。本文的内容也主要总结于这两篇文章。</p>
+<p>Mimblewimble协议给出了以上两个问题的解决方案，在提供信息隐藏能力的同时解决了部分效率问题。</p>
+<h1 id="基础概念"><a href="#基础概念" class="headerlink" title="基础概念"></a>基础概念</h1><p>除了比特币已有的技术，Mimblewimble协议的构造用到了椭圆曲线密码学技术和Bulletproofs技术。本章对两种技术作简要介绍，着重于技术的特性和应用，而不会过多介绍背后的数学原理。</p>
+<h2 id="椭圆曲线"><a href="#椭圆曲线" class="headerlink" title="椭圆曲线"></a>椭圆曲线</h2><p>简要对椭圆曲线密码学进行介绍，阐述Mimblewimble会用到的椭圆曲线特性[^5]。</p>
+<p>用于密码学目的的椭圆曲线只是一大组我们称之为 <em>C</em> 的点。这些点可以被加、减或乘以整数（也称为标量）。 给定一个整数 <em>k</em> 并使用标量乘法运算，我们可以计算<code>k * H</code>，这也是曲线 <em>C</em> 上的一个点。 给定另一个整数 <em>j</em>，我们也可以计算<code>(k + j）* H</code>，它等于<code>k * H + j * H</code>。 椭圆曲线上的加法和标量乘法运算保持加法和乘法的交换律和结合律：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(k+j)*H = k*H + j*H</span><br></pre></td></tr></table></figure>
+
+<p>如果我们选择一个非常大的数字 <em>k</em> 作为私钥，则<code>k * H</code>被作为相应的公钥。 即使人们知道公钥<code>k * H</code>的值，推导 <em>k</em> 几乎不可能（或者换句话说，椭圆曲线点的乘法计算是微不足道的，然而曲线点的“除法”计算却极其困难。</p>
+<h2 id="Bulletproofs"><a href="#Bulletproofs" class="headerlink" title="Bulletproofs"></a>Bulletproofs</h2><p>Bulletproofs是一种新的零知识、无交互的交易证明协议。Mimblewimble主要利用了Bulletproofs作为核心的范围证明技术。</p>
+<p>简单的说，范围证明可以使得在不暴露数值<code>x</code>的情况下证明<code>x</code>落在某个范围内，例如<code>x &gt; 0 &amp;&amp; x &lt; 100000</code>。</p>
+<h1 id="基本构造"><a href="#基本构造" class="headerlink" title="基本构造"></a>基本构造</h1><p>在阐述Mimblewimble的基本构造之前，要先移除已经存在的区块链网络环境，包括比特币脚本，因为它们的内容过于具体和复杂。后面将会解释，基于比特币脚本进行交易混合基本是不可能做到的。但无论如何，Mimblewimble都是一种对比特币的优化方法；基于Mimblewimble协议的其它区块链系统的介绍会在下一章呈现。</p>
+<h2 id="Pederson-Commitment"><a href="#Pederson-Commitment" class="headerlink" title="Pederson Commitment"></a>Pederson Commitment</h2><p>Mimblewimble协议中，交易内容的编码是交易金额v的Pederson Commitment，编码方式如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C = r*G + v*H</span><br></pre></td></tr></table></figure>
+
+<p>其中，v是交易金额，r是致盲因子，G和H是被选择的椭圆曲线点（准确地说，是椭圆曲线加密函数生成的固定的值）。</p>
+<p>Pederson Commitment构造保证了两点：</p>
+<ul>
+<li>交易可以隐藏具体交易数值，并且在不知道具体交易数值的情况下完成验证</li>
+<li>拥有私钥即拥有输出的所有权</li>
+</ul>
+<p>接下来对这两点依次进行说明：</p>
+<h3 id="隐藏交易"><a href="#隐藏交易" class="headerlink" title="隐藏交易"></a>隐藏交易</h3><p>考虑一笔交易的输入是<code>v1</code>和<code>v2</code>， 输出是<code>v3</code>，那么验证交易的零和是容易的，只需验证以下等式即可：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">v1 + v2 = v3</span><br></pre></td></tr></table></figure>
+
+<p>以明文编码提供不了任何隐秘性。要隐藏具体数值，最容易想到的做法是引入一个椭圆曲线点<code>H</code>作为因子。现在，交易数值不变，但编码分别称为了<code>v1*H</code>、<code>v2*H</code>、<code>v3*H</code>。我们知道“除法”的计算相当困难，所以可以认为通过<code>v1*H</code>难以反推出<code>v1</code>，交易数值被隐藏了；零和验证依然是容易的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">v1*H + v2*H = (v1 + v2)*H = v3*H</span><br></pre></td></tr></table></figure>
+
+<p>在这种情况下，<code>H</code>在每一个交易中都需要使用，是公开的。所以攻击者可以通过尝试每个可能的<code>v1</code>值来计算出真正的<code>v1</code>。此时问题不在于<code>v1</code>的取值范围有多大，而在于一旦<code>v1</code>被破解，所有等于<code>v1</code>的交易由于拥有相同的编码，也一并被破解了。</p>
+<p>Pederson Commitment解决该问题的奥秘之处在于引入了另一个椭圆曲线点<code>G</code>，<code>r</code>是一个私钥，由发起交易的人自己选择，完全可以和交易值<code>v</code>无关。交易的编码分别为：</p>
+<p>输入：<code>v1*H + r1*G</code>，<code>v2*H + r2*G</code></p>
+<p>输出：<code>v3*H + r3*G</code></p>
+<p>Pederson Commitment的加法同态性使得零和验证依然是容易的：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(v1*H + r1*G) + (v2*H + r2*G) = (v1 + v2)*H + (r1 + r2)*G = v3*H + r3*G</span><br></pre></td></tr></table></figure>
+
+<p>这里要注意的是，要保证上式成立，需要有<code>r1 + r2 = r3</code>。毕竟这三个致盲因子来源于不同的交易，如何保证<code>r1 + r2 = r3</code>？我们在下一节所有权部分回答这个问题。</p>
+<p>Pederson Commitment具有良好的性质：在知道<code>v*H + r*G</code>的情况下，不能推出<code>v</code>和<code>r</code>；而因为两个数值毫无关系，能满足等式的组合也可能不止一种，暴力破解也不可能；因为每一笔交易的<code>r</code>都不同，也不用担心一个交易被暴露后相似的交易也会暴露的问题。</p>
+<h3 id="所有权"><a href="#所有权" class="headerlink" title="所有权"></a>所有权</h3><p>上一节引入了致盲因子<code>r</code>来隐藏交易，我们知道<code>r</code>同时也是私钥的一部分。每一笔交易产生后一个必要的作用就是让交易输出的接受者能够使用这笔钱。Mimblewimble中，这个致盲因子<code>r</code>就可以被用来证明钱的所有权。</p>
+<p>假设Alice给Bob转了一笔钱<code>v1</code>，这笔交易的记录为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C1 = v1*H + r1*G</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>C1</code>是公开的；<code>r1</code>只有Alice知道；<code>v1</code>是转账金额，只有Alice和Bob两个人知道。</p>
+<p>接下来，Bob要使用这笔钱，假设他将数值同样为<code>v1</code>的钱转给了某个人，钱的来源是<code>C1</code>这笔交易。<code>C2</code>交易的记录为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C2 = v1*H + r2*G</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>r2</code>是一个私钥，只有Bob自己知道。现在要验证这笔交易的零和性，应当有<code>C1 = C2</code>，可是我们却得到了<code>r1*G = r2*G</code>。这是不成立的，因为<code>r2</code>没有理由和<code>r1</code>相等，Alice也不可能将<code>r1</code>告诉Bob（或者说Bob不敢使用Alice给他的致盲因子，因为这样会导致自己的钱被Alice花掉）。既然<code>r1</code>和<code>r2</code>不想等，那么我们可以计算<code>C1</code>和<code>C2</code>的差值：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">E = C2 - C1 = (r2 - r1)*G</span><br></pre></td></tr></table></figure>
+
+<p>其中<code>r2 - r1</code>被称为excess value。此时，Bob在交易中公开<code>E</code>值（具体公开方式应该选择对<code>E</code>进行签名，这样就可以验证<code>E</code>确实是Bob公开的），零和验证过程就变成了：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C1 + E = v1*H + r1*G + (r2-r1)*G = v2*H + r2*G = C2</span><br></pre></td></tr></table></figure>
+
+<p>在此过程中，椭圆曲线密码学保证了只有<code>v2 - v1 = 0</code>时等式才会成立，即<code>E</code>一定是<code>G</code>上的有效公钥。</p>
+<h2 id="交易费"><a href="#交易费" class="headerlink" title="交易费"></a>交易费</h2><p>有了上述Pederson Commitment构造，在交易中加入一笔交易费就很容易了。和比特币有交易费一样，只需要明确一个具体的交易费数值<code>vt</code>，在验证时将它乘上<code>H</code>再减掉就可以了。假设输入是<code>C1</code>，输出是<code>C2</code>，验证过程：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">C1 + E = v1*H + r1*G + (r2-r1)*G = (v2+vt)*H + r2*G = v2*H + r2*G + vt*H = C2 + vt*H </span><br></pre></td></tr></table></figure>
+
+<p>这样，这笔交易还可以当作矿工以后交易的输入值。</p>
+<h2 id="范围证明"><a href="#范围证明" class="headerlink" title="范围证明"></a>范围证明</h2><p>在以上的讨论中，我们都假设交易值都是正数。现在考虑这样一笔交易（这个例子来自Grin项目的文档[^4]）：输入为2，输出为两笔钱，分别是5和-3。这笔交易在上述的构造中完全是合法的，如果我们忽视-3的账单，将多出来的3个单位的钱汇入自己的账户，就凭空多出来了3个单位的钱。这是非常危险的。</p>
+<p>Mimblewimble解决此问题的方案是引入范围证明。范围证明保证了交易的数值<code>v</code>落在一个合法的范围内。一般来说，我们希望交易数值是一个正数并且不会溢出，那么我们给出一个<code>v</code>在范围<code>[0, 2^64]</code>的范围证明<code>range_proof</code>，验证方只需要知道<code>v*H + r*G</code>和<code>range_proof</code>就能在不知道<code>v</code>的情况下验证<code>v</code>的确属于范围<code>[0, 2^64]</code>。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>上述所有构造可以总结为记录到区块内的一个交易的具体内容：</p>
+<ul>
+<li>一组输入：<code>vi1*H + ri1*G, vi2*H + ri2*G, ...</code></li>
+<li>一组输出：<code>vo1*H + ro1*G, vo2*H + ro2*G, ...</code></li>
+<li>和输出相关的范围证明：<code>range_proof_vo1, range_proof_vo2, ...</code></li>
+<li>交易费：<code>vt</code></li>
+<li>excess value的签名：<code>E</code></li>
+</ul>
+<p>和验证过程：</p>
+<ul>
+<li>验证每个<code>vo</code>的范围都是合法范围</li>
+<li>验证<code>E</code>有交易发起者的签名</li>
+<li>验证输入输出是零和的</li>
+</ul>
+<h1 id="高级构造"><a href="#高级构造" class="headerlink" title="高级构造"></a>高级构造</h1><p>将上一章以Pederson Commitment为基础的基本构造巧妙地隐藏了交易数值。本章介绍Mimblewimble的实现Grin如何通过cut-through技术来提高效率和提高匿名性。</p>
+<p>在叙述本章内容之前，方便后面内容的讨论，对基础构造内容作一个简单的抽象：将一笔交易所有输入抽象为<code>inputs</code>，所有输出抽象为<code>outputs</code>，所有的范围证明、交易费、excess value等用于验证的信息抽象为<code>kernel_excess</code>。</p>
+<p>验证过程就简化为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sum(inputs) - sum(outputs) = kernel_excess</span><br></pre></td></tr></table></figure>
+
+<h2 id="交易聚合"><a href="#交易聚合" class="headerlink" title="交易聚合"></a>交易聚合</h2><p>对于多笔交易，比如一个区块里的所有合法交易，可以看成一个交易序列。将这些交易的所有输入进一步抽象为<code>inputs</code>，所有输出抽象为<code>outputs</code>，所有<code>kernel_excess</code>抽象为<code>kernel_excess</code>，如下等式成立：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sum(inputs) - sum(outputs) = sum(kernel_excess)</span><br></pre></td></tr></table></figure>
+
+<p>也就是说，交易聚合后仍然是合法的。</p>
+<p>我们希望交易聚合后能达到“混合”的效果，区块的内容只能展示输入有哪些以及输出有哪些，而不能通过公开的信息推出哪些输入对应哪些输出。上面关于聚合的构造还不能做到这一点，因为攻击者完全可以通过枚举输入和输出来尝试通过验证，这样就很容易将某些输入和输出匹配。Mimblewimble利用kernel_offsets[^3]技术解决了这一问题，这里不详细说明。</p>
+<h2 id="Cut-through"><a href="#Cut-through" class="headerlink" title="Cut-through"></a>Cut-through</h2><p>考虑在同一区块内有这样两笔交易：Alice给Bob转了<code>v1</code>；Bob又给Ted转了<code>v1</code>， 花的正是Alice转来的这笔钱。如果这两笔交易都通过了验证，那么在区块里可以只记录这样的一笔交易：Alice给Ted转了<code>v1</code>。这样做就完成了关于Bob的两笔交易的隐藏，同时减小了空间消耗。</p>
+<p>更进一步地，可以对一个区块内的所有交易都做这样的处理，使得最终区块看上去只有一系列的输入和一系列的输出，交易的结构完全被消除了，而且输入和输出的顺序也变得无关紧要。同时，零和验证依然可以正常进行。交易结构的消除使得匹配输入和输出称为不可能。</p>
+<h2 id="区块链级别的优化"><a href="#区块链级别的优化" class="headerlink" title="区块链级别的优化"></a>区块链级别的优化</h2><p>在引言部分提到，比特币系统的一大问题在于交易历史过于臃肿，只有极少一部分的输出是没有被花掉的。尽管区块链是不更改的，UTXO对于全节点而言仍然是一个一致的集合。区块链的状态总是可以被代币总量+UTXO+每笔交易的kernel_excess刻画，以目前的构造每一项都是易于计算和验证的，而且所占空间非常小。这就意味着新的全节点不需要再像比特币的全节点那样输入巨大的交易历史并计算UTXO。</p>
+<h2 id="总结-1"><a href="#总结-1" class="headerlink" title="总结"></a>总结</h2><p>Grin作为Mimblewimble一个较为成熟的实现，使用cut-throught技术缩小了必要账本的体积，同时提高了匿名性。可以看出Grin非常看重匿名性。</p>
+<h1 id="基本应用"><a href="#基本应用" class="headerlink" title="基本应用"></a>基本应用</h1><p>基于Mimblewimble的大项目有两个：Grin和Beam。Beam在2019年1月3日主网上线，Grin是在1月15日。对这两个项目的介绍不是本文的重点内容，这里只展示一段我对两个项目的对比总结。</p>
+<p>Grin坚持完全交给开源社区管理，Beam则是成立公司；Grin拥有更广为人知的出色的技术，Beam在技术上低调很多，也承认他们一直在向Grin学习；Grin团队明确选择放弃扩展除核心功能之外的其他功能，Beam提出可审计钱包，允许企业或其他用户生成独有的公&#x2F;私钥对，密钥对可以让外部第三方验证资金或其他任何存储在交易中的元数据；Grin更理想主义，Beam更现实主义。</p>
+<p>Beam的货币和很多古老的加密货币一样，总量是有限的。Grin的货币则更大胆：每分钟挖出60个，永远如此！这是典型的通胀货币政策，它会让Grin更像是现实货币（拥有应付通胀能力，更加稳定），而不是黄金。这意味着Grin几乎没法割韭菜。事实上，Grin社区的态度也非常鲜明，他们拥有如此高的技术，却没有创始人奖励、没有ICO、不接受公司或基金会的控制，比比特币更加理想化。可以这么说，Grin的胜利将会是理想主义的胜利，同时也是比特币、去中心化、无政府主义的胜利。但就目前看来，Grin离他们想要的胜利还非常遥远。</p>
+<p>Grin最大的问题不在于能保护多少隐私，而在于有多少人用！目前的情况是，Grin的区块链中有大量的区块只包含一条交易，这使得第三章“高级构造”中提到的cut-through技术没有用武之地。越来越少的关注会使得Grin币值缓慢下降，而不是像其它的总量有限的冷门货币那样至少可以保值。</p>
+<p>最后我想说，正因为Grin的这些理想化又似乎在现实中受冷落的特点，我们才不能小看它。加密货币的价值来源是人们的信仰。“韭菜收割者”正是看中了这一点，一番炒作下，近几年的币圈才会出现巨大的泡沫同时又出现很多批判的声音。Grin的各种政策表明它不是一个能被“炒火”的币，它的价值是失去了“韭菜收割者”的支持后剩下的，或许不会突然飞黄腾达，但凝聚下来的都是顽强的、憧憬无政府、无规则社会的理想主义。</p>
+<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>本章解答作业中提出的三个问题。</p>
+<h2 id="签名私钥的处理"><a href="#签名私钥的处理" class="headerlink" title="签名私钥的处理"></a>签名私钥的处理</h2><p>答案在第二章”基本构造“中，私钥体现在每笔交易中由交易发起者选择的致盲因子<code>r</code>。致盲因子的作用包括：隐藏交易、防止暴力破解、证明所有权。致盲因子<code>r</code>最终作为签名体现在交易的excess_kernel中。</p>
+<h2 id="双花问题"><a href="#双花问题" class="headerlink" title="双花问题"></a>双花问题</h2><p>双花问题的解决方案在于第二章“基本构造”的excess value。和比特币系统类似，每一笔交易都包含交易发起者的签名（excess_kernel），通过UTXO的验证即可发现交易的输出是否已经被花掉；更进一步的，在第三章“高级构造”的Grin系统中，区块的交易经过聚合，输入序列和输出序列的总值想等。如果出现双花，必然会很容易发现不等的情况。</p>
+<h2 id="对Mimblewimble协议的攻击"><a href="#对Mimblewimble协议的攻击" class="headerlink" title="对Mimblewimble协议的攻击"></a>对Mimblewimble协议的攻击</h2><p>在第二章到第三章提出了很多种攻击模型，分别是：</p>
+<ul>
+<li>针对交易值<code>v</code>的暴力破解</li>
+<li>利用已暴露的交易数值破解其它交易</li>
+<li>通过共享致盲因子窃取别人的钱</li>
+<li>通过构造负数或者溢出数值凭空造钱</li>
+<li>通过拼凑输入序列和输出序列的组合来匹配具体交易</li>
+<li>通过篡改UTXO来进行双花</li>
+</ul>
+<p>在攻击模型提出的相应部分都给出了具体应对方案。</p>
+<h1 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h1><p>[^1]: “MIMBLEWIMBLE” [online]. Available: <a target="_blank" rel="noopener" href="https://download.wpsoftware.net/bitcoin/wizardry/mimblewimble.txt">https://download.wpsoftware.net/bitcoin/wizardry/mimblewimble.txt</a><br>[^2]: “MIMBLEWIMBLE” [online]. Available: <a target="_blank" rel="noopener" href="https://download.wpsoftware.net/bitcoin/wizardry/mimblewimble.pdf">https://download.wpsoftware.net/bitcoin/wizardry/mimblewimble.pdf</a><br>[^3]: “Mimblewimble Non-Interactive Transaction Scheme” [online]. Available: <a target="_blank" rel="noopener" href="https://eprint.iacr.org/2020/1064.pdf">https://eprint.iacr.org/2020/1064.pdf</a><br>[^4]: “Introduction to Mimblewimble and Grin” [online]. Available: <a target="_blank" rel="noopener" href="https://github.com/mimblewimble/grin/blob/master/doc/intro.md">https://github.com/mimblewimble/grin/blob/master/doc/intro.md</a><br>[^5]: <a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/%E6%A4%AD%E5%9C%86%E6%9B%B2%E7%BA%BF%E5%AF%86%E7%A0%81%E5%AD%A6">https://zh.wikipedia.org/wiki/椭圆曲线密码学</a><br>[^6]: “Bulletproofs: Short Proofs for Confidential Transactions and More” [online]. Available: <a target="_blank" rel="noopener" href="https://eprint.iacr.org/2017/1066.pdf">https://eprint.iacr.org/2017/1066.pdf</a></p>
+<p>（本文定价0元）</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/blockchain/" rel="tag"># blockchain</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/05/08/%E4%BB%80%E4%B9%88%E6%98%AFcontinuation/" rel="prev" title="什么是continuation">
+                  <i class="fa fa-angle-left"></i> 什么是continuation
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2022/04/29/I-m-coming-back/" rel="next" title="I&#39;m coming back">
+                  I'm coming back <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">John Doe</span>
+  </div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>
