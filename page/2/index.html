@@ -195,7 +195,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2025-06-26 11:10:05" itemprop="dateModified" datetime="2025-06-26T11:10:05+08:00">2025-06-26</time>
+      <time title="修改时间：2025-06-26 14:47:14" itemprop="dateModified" datetime="2025-06-26T14:47:14+08:00">2025-06-26</time>
     </span>
 
   
@@ -208,7 +208,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>与其问什么是 continuation，不如先问什么是控制流。</p>
+          <span id="more"></span>
+
+<p>与其问什么是 continuation，不如先问什么是控制流。</p>
 <p>控制流在各编程语言中都是相当基础的概念，它表示程序接下来应该怎么执行。典型的命令式语言程序中存在条件控制流和循环控制流，部分语言中存在 try-catch 异常捕获机制。它们的实现往往和语言本身的实现有紧密的关系。例如，一个 C 语言的编译器需要为条件表达式单独创建一个 AST，并对这个 AST 进行特有的语义分析（或者进行仅属于条件表达式规则的求值）。C 语言中 continuation 表现为当前状态下处理器里各个寄存器的值和栈内数据。</p>
 <p>和以前一样，为了清晰性，我会选择 Scheme 这样易于解释的语言来编写程序作为辅助说明，有时可能也会选择 JavaScript 这种人人都能轻易地看懂而且表达能力强大的语言，或许也会使用 Haskell 这样拥有相对强大类型系统的语言。</p>
 <h1 id="作为控制流的抽象"><a href="#作为控制流的抽象" class="headerlink" title="作为控制流的抽象"></a>作为控制流的抽象</h1><p>Continuation 是控制流的抽象。在一个表达式求值的过程中，continuation 就是求值到目前为止剩下的部分。</p>
@@ -338,7 +340,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2025-06-26 11:10:05" itemprop="dateModified" datetime="2025-06-26T11:10:05+08:00">2025-06-26</time>
+      <time title="修改时间：2025-06-26 14:47:03" itemprop="dateModified" datetime="2025-06-26T14:47:03+08:00">2025-06-26</time>
     </span>
 
   
@@ -351,7 +353,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>最近了解了区块链方面的知识，在尝试在自己的电脑上搭建 Hyperledger Fabric 时遇见了几个坑。自己踩过了，给各位提个醒，希望大家能少走点弯路。</p>
+          <span id="more"></span>
+
+<p>最近了解了区块链方面的知识，在尝试在自己的电脑上搭建 Hyperledger Fabric 时遇见了几个坑。自己踩过了，给各位提个醒，希望大家能少走点弯路。</p>
 <h1 id="git-clone-速度慢导致失败"><a href="#git-clone-速度慢导致失败" class="headerlink" title="git clone 速度慢导致失败"></a>git clone 速度慢导致失败</h1><p>如果你 git clone 国外资源时速度只有 10kB&#x2F;s 左右，那么很容易 clone 到一半就发生异常然后中止。可能的情况有很多，比如，如果你遇见了这种 Error：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git error: RPC failed; curl 56 GnuTLS</span><br></pre></td></tr></table></figure>
 
@@ -440,7 +444,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2025-06-26 11:10:05" itemprop="dateModified" datetime="2025-06-26T11:10:05+08:00">2025-06-26</time>
+      <time title="修改时间：2025-06-26 14:48:15" itemprop="dateModified" datetime="2025-06-26T14:48:15+08:00">2025-06-26</time>
     </span>
 
   
@@ -453,7 +457,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>先不提 Y-Combinator. 我对这个问题的兴趣最初来自于 Friedman 的 <em>The Little Schemer</em> 第九章，下面的推导过程也参考了此书。我曾经在使用 JavaScript 编程时一度对 first-class function 和匿名函数这样的特性很着迷，并沉醉于将所有的函数定义都写成这样：</p>
+          <span id="more"></span>
+
+<p>先不提 Y-Combinator. 我对这个问题的兴趣最初来自于 Friedman 的 <em>The Little Schemer</em> 第九章，下面的推导过程也参考了此书。我曾经在使用 JavaScript 编程时一度对 first-class function 和匿名函数这样的特性很着迷，并沉醉于将所有的函数定义都写成这样：</p>
 <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> someFunction = <span class="keyword">function</span>(<span class="params">args</span>) &#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
 
 <p>这样定义函数直接带来一个显而易见的问题：如何实现函数的递归定义？</p>
@@ -621,7 +627,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2025-06-26 11:10:05" itemprop="dateModified" datetime="2025-06-26T11:10:05+08:00">2025-06-26</time>
+      <time title="修改时间：2025-06-26 14:47:19" itemprop="dateModified" datetime="2025-06-26T14:47:19+08:00">2025-06-26</time>
     </span>
 
   
@@ -634,7 +640,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>保尔·格雷厄姆在《书呆子的复仇》一文中为了讨论不同语言编程能力的差别，使用了一个累加器的例子。这部分内容相当有趣，但这篇文章有些年头了。本文会将保尔·格雷厄姆原文的大部分内容重新展示，并结合更新的技术给出更多的例子和自己的一点看法。</p>
+          <span id="more"></span>
+
+<p>保尔·格雷厄姆在《书呆子的复仇》一文中为了讨论不同语言编程能力的差别，使用了一个累加器的例子。这部分内容相当有趣，但这篇文章有些年头了。本文会将保尔·格雷厄姆原文的大部分内容重新展示，并结合更新的技术给出更多的例子和自己的一点看法。</p>
 <h1 id="玩具：累加器生成函数"><a href="#玩具：累加器生成函数" class="headerlink" title="玩具：累加器生成函数"></a>玩具：累加器生成函数</h1><p>我们要编写一个函数（或者对象、类，只要能实现我们的需求就行），它接受一个参数 n，然后返回另一个函数，后者接受参数 i，n 在原先的基础上增加 i，然后这个函数返回增加之后的值。</p>
 <p>比如这个函数是 foo, 我们需要的结果是：</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">f = foo(5)</span><br><span class="line">f(4) // =&gt; 9</span><br><span class="line">f(10) // =&gt; 19</span><br><span class="line">f(1) // =&gt; 20</span><br></pre></td></tr></table></figure>
@@ -772,7 +780,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2025-06-26 11:10:05" itemprop="dateModified" datetime="2025-06-26T11:10:05+08:00">2025-06-26</time>
+      <time title="修改时间：2025-06-26 14:48:03" itemprop="dateModified" datetime="2025-06-26T14:48:03+08:00">2025-06-26</time>
     </span>
 
   
@@ -785,7 +793,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>值和引用是编程中经常需要面对的两个概念，本文将结合主流编程语言的做法，在抽象和实现层面对这两个概念进行初步的解释。</p>
+          <span id="more"></span>
+
+<p>值和引用是编程中经常需要面对的两个概念，本文将结合主流编程语言的做法，在抽象和实现层面对这两个概念进行初步的解释。</p>
 <h1 id="地址的概念"><a href="#地址的概念" class="headerlink" title="地址的概念"></a>地址的概念</h1><p>在解释值和引用之前，我们先看一段 RISC 风格的汇编代码，它完成的事情是将变量 y 的值赋给变量 x.</p>
 <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">// x = y</span><br><span class="line"></span><br><span class="line">ld r1, y</span><br><span class="line">st r1, x</span><br></pre></td></tr></table></figure>
 
@@ -909,7 +919,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2025-06-26 11:10:05" itemprop="dateModified" datetime="2025-06-26T11:10:05+08:00">2025-06-26</time>
+      <time title="修改时间：2025-06-26 14:46:57" itemprop="dateModified" datetime="2025-06-26T14:46:57+08:00">2025-06-26</time>
     </span>
 
   
@@ -922,7 +932,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>本人的博客供免费阅览，读者如果喜欢的话，可以自愿付款。</p>
+          <span id="more"></span>
+
+<p>本人的博客供免费阅览，读者如果喜欢的话，可以自愿付款。</p>
 <p>每篇博文下都会有定价作为付款金额参考。付款金额无下限，有上限。对于定价为 a 元的文章，无论你多么喜欢，请不要支付超过 a*10 元。</p>
 <div align="center">
 <img src="博客付款通道/IMG_0142.JPG" width="40%" height="40%" alt="zhifubao">
@@ -991,7 +1003,7 @@
         <i class="far fa-calendar-check"></i>
       </span>
       <span class="post-meta-item-text">更新于</span>
-      <time title="修改时间：2025-06-26 11:10:05" itemprop="dateModified" datetime="2025-06-26T11:10:05+08:00">2025-06-26</time>
+      <time title="修改时间：2025-06-26 14:47:17" itemprop="dateModified" datetime="2025-06-26T14:47:17+08:00">2025-06-26</time>
     </span>
 
   
@@ -1004,7 +1016,9 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>很多程序设计语言都会有自己的关键字，有一些关键字是多语言通用的，如大家熟悉的 while, var, let, for 等等。这些关键字一般来说，要么是英文单词，要么是单词的缩写，比如 var 就是 variable 的缩写。但有些语言，会使用一些不太符合我的审美的关键字，使得这门语言看起来多多少少有些奇怪。</p>
+          <span id="more"></span>
+
+<p>很多程序设计语言都会有自己的关键字，有一些关键字是多语言通用的，如大家熟悉的 while, var, let, for 等等。这些关键字一般来说，要么是英文单词，要么是单词的缩写，比如 var 就是 variable 的缩写。但有些语言，会使用一些不太符合我的审美的关键字，使得这门语言看起来多多少少有些奇怪。</p>
 <h1 id="“val”-Kotlin"><a href="#“val”-Kotlin" class="headerlink" title="“val”-Kotlin"></a>“val”-Kotlin</h1><p>我首先要说的是 Kotlin 中的 val 关键字。val 不是 Kotlin 首创的，但此处谈论的对象仅仅是 Kotlin 中的 “val”。这个由3个字母组成的关键字多多少少有点奇怪：在语义上，它表示声明运行时常量，其它语言具有类似功能的关键字可能是 “const”, “let” 等等（Kotlin 也有自己的 const，但语义不同），”val” 的问题在于它和 Kotlin 另一个同样用来声明变量的关键字 “var” 只差一个字母！在没有代码高亮的情况下，给出数行变量和常量声明，你能一眼看出来哪些是变量哪些是常量吗？</p>
 <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> a = <span class="number">5</span></span><br><span class="line"><span class="keyword">var</span> b = <span class="number">6</span></span><br><span class="line"><span class="keyword">val</span> c = <span class="number">7</span></span><br><span class="line"><span class="keyword">val</span> d = <span class="number">8</span></span><br><span class="line"><span class="keyword">var</span> e = <span class="number">9</span></span><br><span class="line"><span class="keyword">var</span> f = <span class="number">10</span></span><br><span class="line"><span class="keyword">var</span> g = <span class="number">11</span></span><br><span class="line"><span class="keyword">val</span> h = <span class="number">12</span></span><br><span class="line"><span class="keyword">val</span> i = <span class="number">13</span></span><br><span class="line"><span class="keyword">val</span> j = <span class="number">14</span></span><br><span class="line"><span class="keyword">val</span> k = <span class="number">15</span></span><br><span class="line"><span class="keyword">val</span> l = <span class="number">16</span></span><br><span class="line"><span class="keyword">var</span> m = <span class="number">17</span></span><br><span class="line"><span class="keyword">val</span> n = <span class="number">18</span></span><br><span class="line"><span class="keyword">val</span> o = <span class="number">19</span></span><br></pre></td></tr></table></figure>
 
