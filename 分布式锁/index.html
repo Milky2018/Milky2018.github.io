@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"milky2018.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="今天分享的主题是分布式锁。 动机：一致性问题在任何分布式系统中，只要出现并发，就一定有一致性问题。这里举一个简单的例子，买家在电商平台上购买了一件商品，卖家还未发货；此时买家发出了取消订单的请求，同时卖家发出了发货的请求，那么平台应该怎么处理？暂且不论正确结果应该是什么，至少平台不能简单地直接并发处理两个请求，否则两个请求都收到了成功的回复，而订单不可能同时在发货和取消状态。 这种例子是非常常见的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="分布式锁">
+<meta property="og:url" content="https://milky2018.github.io/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/index.html">
+<meta property="og:site_name" content="MilkyHouse">
+<meta property="og:description" content="今天分享的主题是分布式锁。 动机：一致性问题在任何分布式系统中，只要出现并发，就一定有一致性问题。这里举一个简单的例子，买家在电商平台上购买了一件商品，卖家还未发货；此时买家发出了取消订单的请求，同时卖家发出了发货的请求，那么平台应该怎么处理？暂且不论正确结果应该是什么，至少平台不能简单地直接并发处理两个请求，否则两个请求都收到了成功的回复，而订单不可能同时在发货和取消状态。 这种例子是非常常见的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://milky2018.github.io/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/fencing-tokens.png">
+<meta property="article:published_time" content="2022-08-17T02:18:11.000Z">
+<meta property="article:modified_time" content="2025-06-26T08:24:54.285Z">
+<meta property="article:author" content="Milky Natas (a.k.a. 布丁大魔王)">
+<meta property="article:tag" content="distributed-system">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://milky2018.github.io/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/fencing-tokens.png">
+
+
+<link rel="canonical" href="https://milky2018.github.io/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://milky2018.github.io/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/","path":"分布式锁/","title":"分布式锁"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>分布式锁 | MilkyHouse</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">MilkyHouse</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8A%A8%E6%9C%BA%EF%BC%9A%E4%B8%80%E8%87%B4%E6%80%A7%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">动机：一致性问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A8%A1%E5%9E%8B%E5%92%8C%E5%81%87%E8%AE%BE"><span class="nav-number">2.</span> <span class="nav-text">模型和假设</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8A%A0%E9%94%81"><span class="nav-number">3.</span> <span class="nav-text">加锁</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E9%94%81"><span class="nav-number">3.1.</span> <span class="nav-text">数据库锁</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%82%B2%E8%A7%82%E9%94%81"><span class="nav-number">3.1.1.</span> <span class="nav-text">悲观锁</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B9%90%E8%A7%82%E9%94%81"><span class="nav-number">3.1.2.</span> <span class="nav-text">乐观锁</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E5%8C%BA%E5%BA%94%E7%94%A8"><span class="nav-number">3.2.</span> <span class="nav-text">分区应用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81-DLM"><span class="nav-number">3.3.</span> <span class="nav-text">分布式锁 DLM</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Redis"><span class="nav-number">3.3.1.</span> <span class="nav-text">Redis</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Redis-redlock"><span class="nav-number">3.3.2.</span> <span class="nav-text">Redis redlock</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Redis-redlock-review"><span class="nav-number">3.3.3.</span> <span class="nav-text">Redis redlock review</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Fencing"><span class="nav-number">3.3.4.</span> <span class="nav-text">Fencing</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ZooKeeper"><span class="nav-number">3.3.5.</span> <span class="nav-text">ZooKeeper</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#References"><span class="nav-number">5.</span> <span class="nav-text">References</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Milky Natas (a.k.a. 布丁大魔王)</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://milky2018.github.io/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Milky Natas (a.k.a. 布丁大魔王)">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MilkyHouse">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="分布式锁 | MilkyHouse">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          分布式锁
+        </h1>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <div style="height: 40px;"></div><p>今天分享的主题是分布式锁。</p>
+<h1 id="动机：一致性问题"><a href="#动机：一致性问题" class="headerlink" title="动机：一致性问题"></a>动机：一致性问题</h1><p>在任何分布式系统中，只要出现并发，就一定有一致性问题。这里举一个简单的例子，买家在电商平台上购买了一件商品，卖家还未发货；此时买家发出了取消订单的请求，同时卖家发出了发货的请求，那么平台应该怎么处理？暂且不论正确结果应该是什么，至少平台不能简单地直接并发处理两个请求，否则两个请求都收到了成功的回复，而订单不可能同时在发货和取消状态。</p>
+<p>这种例子是非常常见的。分布式数据库的数据复制、分布式资源的竞争访问、甚至是单机并发程序的内存访问。处理这些问题并不一定要用分布式锁，但分布式锁是一个直观的方案，而且在某些场景下难以被替代。</p>
+<h1 id="模型和假设"><a href="#模型和假设" class="headerlink" title="模型和假设"></a>模型和假设</h1><p>按照惯例，我们仍然假设应用的数据部分是一个 key-value 映射表（也被称为寄存器），支持以下操作：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">write(k, v)</span><br><span class="line">read(k) -&gt; v</span><br></pre></td></tr></table></figure>
+
+<p>涉及到加锁，扩展两条指令：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">lock(k)</span><br><span class="line">unlock(k)</span><br></pre></td></tr></table></figure>
+
+<h1 id="加锁"><a href="#加锁" class="headerlink" title="加锁"></a>加锁</h1><p>在订单的例子中，一个订单同时只能处于一种状态，且可响应的请求和状态相关。要避免上述不一致的结果发生，最简单的方式就是为订单关联一个锁。只有持有锁的客户端才能继续访问订单，其它并发客户端则会阻塞在获取锁阶段或者获取锁失败。</p>
+<p>这种抽象的「锁」机制有三种常见的实现方式：数据库锁、分区应用和分布式锁。</p>
+<h2 id="数据库锁"><a href="#数据库锁" class="headerlink" title="数据库锁"></a>数据库锁</h2><p>数据库锁最常用，但不是本次分享的重点，因此作简要介绍。</p>
+<p>假设所有要处理的数据都在同一个数据库中，直接利用数据库的并发控制机制可以简单地解决并发问题。</p>
+<h3 id="悲观锁"><a href="#悲观锁" class="headerlink" title="悲观锁"></a>悲观锁</h3><p>数据库锁是数据库系统的机制，为了防止某些记录被并发修改。例如以下 SQL 语句：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> ... LOCK <span class="keyword">IN</span> SHARE MODE</span><br><span class="line"></span><br><span class="line"><span class="keyword">SELECT</span> ... <span class="keyword">FOR</span> <span class="keyword">UPDATE</span></span><br></pre></td></tr></table></figure>
+
+<p>就会为相应的行加锁（有时也可能锁住多行或者整个表）。第一行是共享锁，第二行是排他锁。共享锁允许多个共享锁一同持有，而排他锁不能和其它锁共存。当某些行需要被更新时，就会获得排他锁，而读数据只需要获取共享锁。</p>
+<p>悲观锁有潜在的死锁问题和性能问题。性能问题来自排他锁阻止了并发访问，而死锁问题可以通过下面的转账例子来理解：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">trans</span>(<span class="params">id1, id2, amount</span>): </span><br><span class="line">  lock(id1)</span><br><span class="line">  lock(id2)</span><br><span class="line">  balance1 = read(id1)</span><br><span class="line">  balance2 = read(id2)</span><br><span class="line">  <span class="keyword">if</span> balance1 &gt;= amount:</span><br><span class="line">    write(id1, balance1 - amount)</span><br><span class="line">    write(id2, balance2 + amount)</span><br><span class="line">    unlock(id1)</span><br><span class="line">    unlock(id2)</span><br><span class="line">    <span class="keyword">return</span> Ok</span><br><span class="line">  <span class="keyword">else</span>: </span><br><span class="line">    unlock(id1)</span><br><span class="line">    unlock(id2)</span><br><span class="line">    <span class="keyword">return</span> Err</span><br></pre></td></tr></table></figure>
+
+<p>考虑 A 在给 B 转账的同时，B 在给 A 转账。此时两个并发的处理过程都执行到了第二行语句，也就是 A 和 B 两个账户都加锁了，而第三行语句都无法执行，造成死锁。预防和处理死锁的办法也有不少，例如给所有 id 排序，然后按照顺序加锁。但死锁的潜在问题仍然是存在的，而且不可能一劳永逸地解决（此处不作详细证明）。</p>
+<h3 id="乐观锁"><a href="#乐观锁" class="headerlink" title="乐观锁"></a>乐观锁</h3><p>乐观锁也叫乐观并发控制，思路也很简单，以以下 SQL 语句为例：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">1.</span> </span><br><span class="line"><span class="keyword">SELECT</span> id, data, version</span><br><span class="line"><span class="keyword">FROM</span> <span class="keyword">table</span></span><br><span class="line"><span class="keyword">WHERE</span> id <span class="operator">=</span> $ID</span><br><span class="line"></span><br><span class="line"><span class="number">2.</span> </span><br><span class="line">Business Code </span><br><span class="line"></span><br><span class="line"><span class="number">3.</span> </span><br><span class="line"><span class="keyword">UPDATE</span> <span class="keyword">table</span> </span><br><span class="line"><span class="keyword">SET</span> data <span class="operator">=</span> $data </span><br><span class="line">    version <span class="operator">=</span> version <span class="operator">+</span> <span class="number">1</span></span><br><span class="line"><span class="keyword">WHERE</span> id <span class="operator">=</span> $ID <span class="keyword">AND</span> version <span class="operator">=</span> $VER</span><br><span class="line"></span><br><span class="line"><span class="number">4.</span> </span><br><span class="line">if <span class="keyword">UPDATE</span> failed, go <span class="keyword">to</span> step <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<p>在修改任何行之前，获取其版本号，并且在修改提交时更新版本号。如果提交时该行的版本号发生了变化，说明并发修改发生了，此时就直接让修改过程失败。</p>
+<p>乐观锁的实现比悲观锁复杂，需要客户端参与（侵入性）。</p>
+<h2 id="分区应用"><a href="#分区应用" class="headerlink" title="分区应用"></a>分区应用</h2><p>略。</p>
+<h2 id="分布式锁-DLM"><a href="#分布式锁-DLM" class="headerlink" title="分布式锁 DLM"></a>分布式锁 DLM</h2><p>考虑更宽泛的场景，例如要实现分布式事务的原子提交，事务涉及到多对象的读写，而不同对象存储于不同的数据库服务中。此时无法使用数据库的并发控制。大体上来说，需要一种分布式锁服务来协调并发任务。这个分布式锁具备以下功能：</p>
+<ul>
+<li>提供加锁、解锁协议</li>
+<li>高可用，意味着没有单点故障并且持久化</li>
+<li>死锁预防，通常使用过期机制或者心跳检测</li>
+</ul>
+<p>单纯实现 <code>lock</code>, <code>unlock</code> 操作是很容易的。可以设想实现这样一个服务，其主存的内容就是一个 key-value 映射表，value 部分是 <code>Mutex&lt;Option&lt;Client&gt;&gt;</code>，用于存储持有该 key 的客户端 id。当 value 为空就表示这个 key 没有被加锁。Mutex 是内存中的锁，用于保证 value 不会被两个线程同时修改。</p>
+<p>困难的部分在于高可用。注意，在实现单机锁服务时使用了内存锁，而多节点想要同时锁住一个对象该怎么做呢？没错，分布式锁服务。因此分布式锁在实现高可用时一定需要一套严密的机制。</p>
+<p>死锁的检测或预防比单机程序的锁更加复杂，因为分布式应用的各个组件都可能是不可靠的。一个服务可能获取锁后就永久掉线了，如果没有对应的机制来释放锁，这个锁就会被永久持有，这也是死锁的一种情况。</p>
+<h3 id="Redis"><a href="#Redis" class="headerlink" title="Redis"></a>Redis</h3><p>观察 Redis 这样的一条加锁操作：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SET</span> resource_name my_random_value NX PX <span class="number">30000</span></span><br></pre></td></tr></table></figure>
+
+<p>语句的意思是，如果 <code>resouce_name</code> 这个 key 不存在，就将其值设置为 <code>my_random_value</code>。过期时间是30秒，30秒后无论有没有主动释放，该 key 都会自动被删除。</p>
+<p>解锁的操作时这样的：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> redis.call(<span class="string">&quot;get&quot;</span>, KEYS[<span class="number">1</span>]) == ARGV[<span class="number">1</span>] <span class="keyword">then</span> </span><br><span class="line">  redis.call(<span class="string">&quot;del&quot;</span>, KEYS[<span class="number">1</span>])</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>Redis 保证了 lua 脚本会原子执行。</p>
+<p>因此 Redis 可以直接充当 DLM。</p>
+<h3 id="Redis-redlock"><a href="#Redis-redlock" class="headerlink" title="Redis redlock"></a>Redis redlock</h3><p>要实现高可用，Redis 的做法是在客户端实现一套算法，这个算法叫作 redlock。算法描述如下：</p>
+<ol>
+<li>客户端获取当前时间，精确到毫秒</li>
+<li>客户端对 Redis 集群的所有示例挨个执行上述加锁操作，使用相同的 key 和随机数 value</li>
+<li>如果这个加锁的总时间小于锁的有效时间（上述过期时间），并且超过一半的示例都获取锁成功，则认为加锁操作成功</li>
+<li>对每个实例的加锁有效时间为 <code>validity time = initial validity time - elapsed time</code></li>
+<li>如果一个实例的加锁过程失败，则整个加锁过程失败，释放掉所有已经加的锁</li>
+</ol>
+<p>用一个例子来解释上述算法。假设现在有5个 Redis 实例，客户端想要获取 key 为 k-1 的锁，超时时间为30000毫秒。客户端的操作流程如下：</p>
+<ol>
+<li>获取当前时间，例如为10000</li>
+<li>生成唯一的随机数，例如12345</li>
+<li>开始尝试对 Redis-0 加锁，执行 <code>SET k-1 12345 NX PX 30000</code>，执行成功</li>
+<li>再次获取时间，由于上述操作经历了2000ms，所以现在的时间是12000</li>
+<li>尝试对 Redis-1 加锁，执行 <code>SET k-1 12345 NX PX 28000</code>，执行成功。新的有效时间计算就是为了多个实例能同时释放锁</li>
+<li>重复上述过程，对 Redis-2 加锁，执行成功</li>
+<li>整个加锁过程宣告成功，接下来异步地对 Redis-3 和 Redis-4 加锁</li>
+</ol>
+<p>这个算法一眼能看出很多问题。首先，所有逻辑都实现在客户端，依赖客户端的正确行为；其次，同时依赖客户端的当前时间和 Redis 服务器的时间，局部时间在分布式系统中是非常不可靠的。下面具体说明该算法的问题。</p>
+<h3 id="Redis-redlock-review"><a href="#Redis-redlock-review" class="headerlink" title="Redis redlock review"></a>Redis redlock review</h3><p>对于锁服务的互斥性的要求是非常苛刻的。一旦一个锁同时被两个客户端持有，可能会发生非常糟糕的事情，例如数据库的两个副本都认为自己是主副本（脑裂）。而对于过期时间或者响应延迟则没有过于严格的要求。</p>
+<p>考虑这样的场景：</p>
+<ol>
+<li>Redis 在 A、B、C、D、E 五个节点上运行，现有两个客户端 Client1 和 Client2 要获取同一个锁</li>
+<li>Client1 按 A、B、C 的顺序获取锁，Client2 按 E、D、C 的顺序获取锁</li>
+<li>Client1 已经成功在 A、B 获取锁，Client2 成功在 E、D 获取锁</li>
+<li>Client1 在 C 获取锁，超时时间是30s</li>
+<li>但节点 C 突然发生了时间跳跃（这是可能发生的，无论是网络同步还是人为修改），导致节点 C 释放了锁</li>
+<li>Client2 在 C 获取锁</li>
+</ol>
+<p>此时 Client1 和 Client2 都认为自己获得了锁，破坏了互斥性。</p>
+<p>考虑第二个场景，客户端在成功完成多数节点的加锁后发生了进程暂停。进程暂停经常发生在带有 GC 的语言中，这些语言的运行时可能会暂停整个世界来进行 GC。即便没有 GC，机器性能和进程调度也可能导致进程暂停。当客户端暂停结束，以为自己仍然持有锁，但实际上进程暂停了一分钟，锁已经过期了，这期间由于进程暂停客户端也丢失了关于锁过期的通知。</p>
+<p>考虑第三个场景，客户端和某个节点之间有非常严重的网络延迟，这个延迟可能有一分钟，也可能使得客户端以为自己持有锁，而锁实际上被释放了。</p>
+<p>后面两个问题看似可以通过延长租期时间来解决，但问题是我们不知道这个时间应当被延长为多少。</p>
+<h3 id="Fencing"><a href="#Fencing" class="headerlink" title="Fencing"></a>Fencing</h3><p>Martin Kleppmann 认为如果一定要用这种方式实现分布式锁，至少还需要添加如下 fencing 机制：</p>
+<p><img src="/./%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/fencing-tokens.png" alt="Using fencing tokens to make resource access safe"></p>
+<p>成功获取锁的同时还会获取一个自增的 token 值，而只有最新的 token 值被允许访问互斥资源。</p>
+<p>这个方案的问题在于分布式锁的实现逻辑被同时生成在了 DLM、客户端和互斥资源处。这个方案最终实现的其实更像乐观锁，回顾我们在乐观锁部分谈到的版本号机制。那么问题就来了，既然可以使用乐观锁，DLM 的意义在哪？</p>
+<h3 id="ZooKeeper"><a href="#ZooKeeper" class="headerlink" title="ZooKeeper"></a>ZooKeeper</h3><p>使用 ZooKeeper 实现共享锁和排他锁也是可能的，下面是操作方法：</p>
+<ol>
+<li>创建 <code>_locknode/lock-</code>，附带 Sequence 和 Ephemeral 标签</li>
+<li>获取 children，检查自己是不是最小的数字</li>
+<li>如果自己是最小的，则获得锁；否则利用 watch 机制进行等待</li>
+</ol>
+<p>Sequence 标签意味着多次对于该 node 的创建会产生顺序自增的名字。Ephemeral 标签意味着当 Client 失去心跳（断联），这个 node 就会被删除。</p>
+<p>ZooKeeper 自身能保证强一致性、高可用。用 ZooKeeper 实现分布式锁是相当实用的选择。</p>
+<p>这种可线性化的 CAS 操作的实现依赖共识算法。ZooKeeper 使用了 zab 算法，而 etcd 使用了 raft。ZooKeeper 可以看做是 Google Chubby 的开源社区版，Chubby 本身使用 Pasox 算法。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><ol>
+<li>数据库的锁足以自动应付数据的并发访问。</li>
+<li>乐观锁没有死锁风险，大部分情况下性能更好。如果应用和数据之间有乐观锁协议，那么锁服务就是不需要的。</li>
+<li>分布式锁服务很难开发，尤其要考虑到高可用。</li>
+<li>高可用性意味着容错和数据复制，容错意味着选举，这些都依赖共识算法。</li>
+<li>分布式锁的死锁预防常用租期或心跳实现。</li>
+</ol>
+<h1 id="References"><a href="#References" class="headerlink" title="References"></a>References</h1><p><a target="_blank" rel="noopener" href="https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html">https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html</a></p>
+<p>本文的 Redis redlock review 和 Fencing 部分的内容来自于这篇文章。作者是 Martin Kleppmann。</p>
+<p>《数据密集型应用系统设计》第8、9章</p>
+<p>作者也是 Martin Kleppmann。该书对数据系统的各个方面作了非常深入的介绍。</p>
+<p><a target="_blank" rel="noopener" href="https://redis.io/topics/distlock/">https://redis.io/topics/distlock/</a></p>
+<p>Redis 的分布式锁算法和其 Redlock 算法。</p>
+<p><a target="_blank" rel="noopener" href="https://zookeeper.apache.org/doc/r3.1.2/recipes.html">https://zookeeper.apache.org/doc/r3.1.2/recipes.html</a></p>
+<p>关于 ZooKeeper 的一切功能的使用方式。</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>本人的博客供免费阅览，读者如果喜欢的话，可以自愿付款。每篇博文下都会有定价作为付款金额参考。付款金额无下限，有上限。对于定价为 a 元的文章，无论你多么喜欢，请不要支付超过 a*10 元。</div>
+  <button>
+    打赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/IMG_0142.JPG" alt="Milky Natas (a.k.a. 布丁大魔王) 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/IMG_0141.JPG" alt="Milky Natas (a.k.a. 布丁大魔王) 微信">
+        <span>微信</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/distributed-system/" rel="tag"># distributed-system</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%89%8B%E5%86%99Parser-Combinator/" rel="prev" title="从零开始手写Parser Combinator">
+                  <i class="fa fa-angle-left"></i> 从零开始手写Parser Combinator
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/%E5%88%86%E5%B8%83%E5%BC%8F%E7%9A%84%E6%9C%AA%E6%9D%A5/" rel="next" title="分布式的未来">
+                  分布式的未来 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Milky Natas (a.k.a. 布丁大魔王)</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>

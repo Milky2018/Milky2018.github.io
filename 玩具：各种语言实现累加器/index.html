@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222"><meta name="generator" content="Hexo 7.3.0">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha256-dABdfBfUoC8vJUBOwGVdm8L9qlMWaHTIfXt+7GnZCIo=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"milky2018.github.io","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.23.1","exturl":false,"sidebar":{"position":"left","width_expanded":320,"width_dual_column":240,"display":"post","padding":18,"offset":12},"hljswrap":true,"codeblock":{"theme":{"light":"default","dark":"stackoverflow-dark"},"prism":{"light":"prism","dark":"prism-dark"},"copy_button":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"language":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":false,"async":false,"duration":200,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js" defer></script>
+
+    <meta name="description" content="保尔·格雷厄姆在《书呆子的复仇》一文中为了讨论不同语言编程能力的差别，使用了一个累加器的例子。这部分内容相当有趣，但这篇文章有些年头了。本文会将保尔·格雷厄姆原文的大部分内容重新展示，并结合更新的技术给出更多的例子和自己的一点看法。 玩具：累加器生成函数我们要编写一个函数（或者对象、类，只要能实现我们的需求就行），它接受一个参数 n，然后返回另一个函数，后者接受参数 i，n 在原先的基础上增加 i">
+<meta property="og:type" content="article">
+<meta property="og:title" content="玩具：各种语言实现累加器">
+<meta property="og:url" content="https://milky2018.github.io/%E7%8E%A9%E5%85%B7%EF%BC%9A%E5%90%84%E7%A7%8D%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E7%B4%AF%E5%8A%A0%E5%99%A8/index.html">
+<meta property="og:site_name" content="MilkyHouse">
+<meta property="og:description" content="保尔·格雷厄姆在《书呆子的复仇》一文中为了讨论不同语言编程能力的差别，使用了一个累加器的例子。这部分内容相当有趣，但这篇文章有些年头了。本文会将保尔·格雷厄姆原文的大部分内容重新展示，并结合更新的技术给出更多的例子和自己的一点看法。 玩具：累加器生成函数我们要编写一个函数（或者对象、类，只要能实现我们的需求就行），它接受一个参数 n，然后返回另一个函数，后者接受参数 i，n 在原先的基础上增加 i">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-08-14T08:17:15.000Z">
+<meta property="article:modified_time" content="2025-06-26T08:17:35.872Z">
+<meta property="article:author" content="Milky Natas (a.k.a. 布丁大魔王)">
+<meta property="article:tag" content="programming-language">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://milky2018.github.io/%E7%8E%A9%E5%85%B7%EF%BC%9A%E5%90%84%E7%A7%8D%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E7%B4%AF%E5%8A%A0%E5%99%A8/">
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://milky2018.github.io/%E7%8E%A9%E5%85%B7%EF%BC%9A%E5%90%84%E7%A7%8D%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E7%B4%AF%E5%8A%A0%E5%99%A8/","path":"玩具：各种语言实现累加器/","title":"玩具：各种语言实现累加器"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>玩具：各种语言实现累加器 | MilkyHouse</title>
+  
+
+
+
+
+
+
+
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous" defer></script>
+<script src="/js/utils.js" defer></script><script src="/js/sidebar.js" defer></script><script src="/js/next-boot.js" defer></script>
+
+  
+
+
+
+
+
+
+  
+
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="headband"></div>
+
+  <main class="main">
+    <div class="column">
+      <header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <p class="site-title">MilkyHouse</p>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger" aria-label="搜索" role="button">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</header>
+        
+  
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%8E%A9%E5%85%B7%EF%BC%9A%E7%B4%AF%E5%8A%A0%E5%99%A8%E7%94%9F%E6%88%90%E5%87%BD%E6%95%B0"><span class="nav-number">1.</span> <span class="nav-text">玩具：累加器生成函数</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Lisp%E5%AE%B6%E6%97%8F"><span class="nav-number">2.</span> <span class="nav-text">Lisp家族</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Ruby-Perl-5-Smalltalk"><span class="nav-number">3.</span> <span class="nav-text">Ruby, Perl 5, Smalltalk</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#JavaScript"><span class="nav-number">4.</span> <span class="nav-text">JavaScript</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Python"><span class="nav-number">5.</span> <span class="nav-text">Python</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#C%E5%AE%B6%E6%97%8F"><span class="nav-number">6.</span> <span class="nav-text">C家族</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Go-Kotlin-Rust"><span class="nav-number">7.</span> <span class="nav-text">Go, Kotlin, Rust</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%8E%B7%E8%83%9C%E8%80%85%E6%98%AF%EF%BC%9F"><span class="nav-number">8.</span> <span class="nav-text">获胜者是？</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">Milky Natas (a.k.a. 布丁大魔王)</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">16</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+        </div>
+      </div>
+    </div>
+
+    
+  </aside>
+
+
+    </div>
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://milky2018.github.io/%E7%8E%A9%E5%85%B7%EF%BC%9A%E5%90%84%E7%A7%8D%E8%AF%AD%E8%A8%80%E5%AE%9E%E7%8E%B0%E7%B4%AF%E5%8A%A0%E5%99%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="Milky Natas (a.k.a. 布丁大魔王)">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="MilkyHouse">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
+      <meta itemprop="name" content="玩具：各种语言实现累加器 | MilkyHouse">
+      <meta itemprop="description" content="">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          玩具：各种语言实现累加器
+        </h1>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <div style="height: 40px;"></div><p>保尔·格雷厄姆在《书呆子的复仇》一文中为了讨论不同语言编程能力的差别，使用了一个累加器的例子。这部分内容相当有趣，但这篇文章有些年头了。本文会将保尔·格雷厄姆原文的大部分内容重新展示，并结合更新的技术给出更多的例子和自己的一点看法。</p>
+<h1 id="玩具：累加器生成函数"><a href="#玩具：累加器生成函数" class="headerlink" title="玩具：累加器生成函数"></a>玩具：累加器生成函数</h1><p>我们要编写一个函数（或者对象、类，只要能实现我们的需求就行），它接受一个参数 n，然后返回另一个函数，后者接受参数 i，n 在原先的基础上增加 i，然后这个函数返回增加之后的值。</p>
+<p>比如这个函数是 foo, 我们需要的结果是：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">f = foo(5)</span><br><span class="line">f(4) // =&gt; 9</span><br><span class="line">f(10) // =&gt; 19</span><br><span class="line">f(1) // =&gt; 20</span><br></pre></td></tr></table></figure>
+
+<h1 id="Lisp家族"><a href="#Lisp家族" class="headerlink" title="Lisp家族"></a>Lisp家族</h1><p>Lisp 家族对闭包的天然支持（除了最古老的 Lisp）使得用 Lisp 来写累加器生成函数非常容易。以下三个函数的写法均来自格雷厄姆的原文：</p>
+<p>Common Lisp:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(defun foo (n)</span><br><span class="line">  (lambda (i) (incf n i)))</span><br></pre></td></tr></table></figure>
+
+<p>Scheme:</p>
+<figure class="highlight scheme"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(<span class="name"><span class="built_in">define</span></span> (<span class="name">foo</span> n)</span><br><span class="line">  (<span class="name"><span class="built_in">lambda</span></span> (i) (<span class="name"><span class="built_in">set!</span></span> n (<span class="name"><span class="built_in">+</span></span> n i)) n))</span><br></pre></td></tr></table></figure>
+
+<p>Arc:</p>
+<figure class="highlight lisp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">(<span class="name">def</span> foo (<span class="name">n</span>) [++ n _])</span><br></pre></td></tr></table></figure>
+
+<p>这里我省去了原文中 Goo 语言的例子，因为在今天看来，Goo 的存在与否似乎没人关心了。这样说的话 Arc 好像也没有多少人关心，但它毕竟是保尔的孩子，为了表示尊敬，我把它留在了这里。Racket 的写法和 Scheme 基本一致，用不着浪费篇幅再讨论了。相比之下，可能接触和使用 Clojure 的人更多。Clojure 不推荐随便改变状态，所以要写一个这样的函数有些麻烦，但不是完全不能做：</p>
+<figure class="highlight clojure"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">(<span class="keyword">defn</span> <span class="title">foo</span> [n]</span><br><span class="line">  (<span class="name"><span class="built_in">let</span></span> [acc (<span class="name"><span class="built_in">atom</span></span> n)]</span><br><span class="line">    (<span class="name"><span class="built_in">fn</span></span> [i] (<span class="name"><span class="built_in">swap!</span></span> acc + i))))</span><br></pre></td></tr></table></figure>
+
+<p>和 Clojure 实例一样，后面由我自己编写的代码都是验证正确的。用 Haskell 这样的纯函数式语言要怎样完成这个任务？想要像上面的例子中这样得到一个干净的结果是做不到的，但总可以把累加结果和累加器封装起来，再编写另一个函数将我们需要的结果数值提取。</p>
+<h1 id="Ruby-Perl-5-Smalltalk"><a href="#Ruby-Perl-5-Smalltalk" class="headerlink" title="Ruby, Perl 5, Smalltalk"></a>Ruby, Perl 5, Smalltalk</h1><p>Ruby:</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">foo</span>(<span class="params">n</span>)</span><br><span class="line">  <span class="built_in">lambda</span> &#123;|<span class="params">i</span>| n += i &#125;</span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+
+<p>相比较闭包和高阶函数，Ruby 对面向对象的关照明显更多。尽管如此，完成累加器这样的任务对于 Ruby 来说要轻而易举。</p>
+<p>Perl 5:</p>
+<figure class="highlight perl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">sub</span> <span class="title">foo</span> </span>&#123;</span><br><span class="line">  <span class="keyword">my</span> (<span class="variable">$n</span>) = <span class="variable">@_</span>;</span><br><span class="line">  <span class="function"><span class="keyword">sub</span> </span>&#123;<span class="variable">$n</span> += <span class="keyword">shift</span>&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>这比 Lisp 和 Ruby 的版本有更多的语法元素，因为在 Perl 语言中必须手工提取参数。</p>
+</blockquote>
+<p>Smalltalk:</p>
+<figure class="highlight smalltalk"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">foo: n</span><br><span class="line">  |s|</span><br><span class="line">  s := n.</span><br><span class="line">  ^[:i| s := s+i. ]</span><br></pre></td></tr></table></figure>
+
+<p>Smalltalk 无法给参数赋值，这一点和后面我们将会在 Python 和 Kotlin 中看到的情况相似。</p>
+<h1 id="JavaScript"><a href="#JavaScript" class="headerlink" title="JavaScript"></a>JavaScript</h1><p>JavaScript 是一门有趣的语言，它从 Scheme 那里搞来了 first-class function 且支持闭包。JavaScript 是单线程的，所以捕获的变量能放心地修改。但同时 JavaScript 却明显地区分语句和表达式。JavaScript 编写的累加器生成函数将是这样：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">function</span> <span class="title function_">foo</span>(<span class="params">n</span>) &#123;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">function</span>(<span class="params">i</span>) &#123;</span><br><span class="line">    <span class="keyword">return</span> n += i;</span><br><span class="line">  &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>现在，ES2015 支持胖箭头函数了，一定会有人想这样写：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="title function_">foo</span> = n =&gt; <span class="function"><span class="params">i</span> =&gt;</span> n += i;</span><br></pre></td></tr></table></figure>
+
+<h1 id="Python"><a href="#Python" class="headerlink" title="Python"></a>Python</h1><p>《书呆子的复仇》原文中给出了三种 Python 的实现方法：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">foo</span>(<span class="params">n</span>):</span><br><span class="line">  s = [n]</span><br><span class="line">  <span class="keyword">def</span> <span class="title function_">bar</span>(<span class="params">i</span>):</span><br><span class="line">    s[<span class="number">0</span>] += i</span><br><span class="line">    <span class="keyword">return</span> s[<span class="number">0</span>]</span><br><span class="line">  <span class="keyword">return</span> bar</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">foo</span>(<span class="params">n</span>):</span><br><span class="line">  <span class="keyword">class</span> <span class="title class_">acc</span>:</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, s</span>):</span><br><span class="line">      <span class="variable language_">self</span>.s = s</span><br><span class="line">    <span class="keyword">def</span> <span class="title function_">inc</span>(<span class="params">self, i</span>):</span><br><span class="line">      <span class="variable language_">self</span>.s += i</span><br><span class="line">      <span class="keyword">return</span> <span class="variable language_">self</span>.s</span><br><span class="line">  <span class="keyword">return</span> acc(n).inc</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">foo</span>:</span><br><span class="line">  <span class="keyword">def</span> <span class="title function_">__init__</span>(<span class="params">self, n</span>):</span><br><span class="line">    <span class="variable language_">self</span>.n = n</span><br><span class="line">  <span class="keyword">def</span> <span class="title function_">__call__</span>(<span class="params">self, i</span>):</span><br><span class="line">    <span class="variable language_">self</span>.n += i</span><br><span class="line">    <span class="keyword">return</span> <span class="variable language_">self</span>.n</span><br></pre></td></tr></table></figure>
+
+<p>原文中针对这些写法，保尔给出了自己的观点。我们只关注第一种写法，因为第二种和第三种做法没有体现 Python 的能力（如果不谈及括号操作符重载），事实上要程序员亲自创建对象来保存 n 的值。相比起来，第一种写法更符合我们的要求。</p>
+<p>如今，Python 中有了 nonlocal 关键字，我们不必要创建 list 来保存变量了：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">def</span> <span class="title function_">foo</span>(<span class="params">n</span>):</span><br><span class="line">  <span class="keyword">def</span> <span class="title function_">bar</span>(<span class="params">i</span>):</span><br><span class="line">    <span class="keyword">nonlocal</span> n</span><br><span class="line">    n += i</span><br><span class="line">    <span class="keyword">return</span> n</span><br><span class="line">  <span class="keyword">return</span> bar</span><br></pre></td></tr></table></figure>
+
+<p>保尔当时预言了 Python 对 lambda 的支持，然而我们现在看到的是，Python 中加入的 lambda 仅仅是匿名函数，而且有很多限制。大家可以尝试用 lambda 编写这个累加器生成函数，不是完全不能做，但没有上面这种写法优雅。</p>
+<h1 id="C家族"><a href="#C家族" class="headerlink" title="C家族"></a>C家族</h1><p>这里提到 C 家族，我有意指那些结构化的、编译执行的、静态类型的、不支持闭包的编程语言。除了 C, C++, Java, C#（如果不考虑 Java 和 C# 的反射能力）可能还包括 VB, Fortran 等。当然，时代在进步，随着一些语言新特性的出现，不可能说不定变成了可能。下面的例子中，可能会包含一些编程“黑魔法”，你尽量不要在你的程序中使用，我写出它们只是为了表示有些事情是可行的。</p>
+<p>考虑到它们是静态类型语言，我们放松问题的要求，只需要得到一个整数累加器就够了。</p>
+<p>Java 和 C++ 都不能胜任这个工作。当然，你总是可以写出像上面 Python 的那种手动保存 n 值的写法，尤其是 C++ 还允许操作符重载。有趣的是，Java SE 8 和 C++ 11 都开始支持 lambda 表达式，但它们都和上面所说的 Python 中的 lambda 差不多，没有语言能力层面的增强。同理，gcc 曾经为 C 语言做的嵌套函数扩展也是一样，虽然看起来好像可以和 Python 中在函数内定义函数，同时捕获外面的变量，再把函数指针返回，然而 C 终究不会自动管理内存，如果你像我上面所说的这样尝试，就会得到混乱的结果，因为在退出函数作用域时，局部变量的栈内存也被回收了。</p>
+<p>Clang 为 C, C++, Obj-C, Obj-C++ 做了一个名为 Blocks 的扩展，它看起来和闭包很像。事实上，它就有闭包的作用：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="title function_">int</span> <span class="params">(^inttoint)</span><span class="params">(<span class="type">int</span>)</span>;</span><br><span class="line">inttoint <span class="title function_">foo</span><span class="params">(<span class="type">int</span> n)</span> &#123;</span><br><span class="line">    __block <span class="type">int</span> _n = n;</span><br><span class="line">    <span class="keyword">return</span> Block_copy(^<span class="type">int</span>(<span class="type">int</span> i) &#123;</span><br><span class="line">        <span class="keyword">return</span> _n += i;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>（如果你手头上有 Clang 编译器，可以尝试编译上述代码并运行，注意要添加预处理指令 #include&lt;Block.h&gt;。）</p>
+<p>虽然我们还是需要手动捕获变量，但它已经和上面提到的第一个 Python 写法很相近了。这种手法在 Obj-C 里使用得比较多，一般应当没有程序员真正会在 C&#x2F;C++ 项目中使用这样的扩展。</p>
+<p>相比较 C++, Java 对 lambda 表达式的限制，C# 表现得宽松得多。用 C# 可以轻松完成任务：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Func&lt;<span class="built_in">int</span>, <span class="built_in">int</span>&gt; <span class="title">Foo</span>(<span class="params"><span class="built_in">int</span> n</span>)</span> </span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">return</span> (<span class="built_in">int</span> i) =&gt; n += i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="Go-Kotlin-Rust"><a href="#Go-Kotlin-Rust" class="headerlink" title="Go, Kotlin, Rust"></a>Go, Kotlin, Rust</h1><p>这些现代语言也是静态类型的，但它们对闭包这样的经典语言特性都有很好的支持。</p>
+<p>Go:</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">foo</span><span class="params">(n <span class="type">int</span>)</span></span> <span class="function"><span class="keyword">func</span><span class="params">(<span class="type">int</span>)</span></span> <span class="type">int</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="function"><span class="keyword">func</span><span class="params">(i <span class="type">int</span>)</span></span> <span class="type">int</span> &#123;</span><br><span class="line">        n += i</span><br><span class="line">        <span class="keyword">return</span> n</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Kotlin 和 Swift 的写法差不多:</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> foo: (<span class="built_in">Int</span>) -&gt; (<span class="built_in">Int</span>) -&gt; <span class="built_in">Int</span> = &#123; n -&gt; <span class="keyword">var</span> _n = n; &#123; i -&gt; _n += i; _n&#125; &#125;</span><br></pre></td></tr></table></figure>
+
+<p>早期的 Kotlin 是可以修改函数参数的，但现在参数都是 val 了，所以需要手动保存。</p>
+<p>Rust 需要考虑到所有权问题，所以会复杂一些:</p>
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">let</span> <span class="variable">foo</span> = |<span class="keyword">mut</span> n: <span class="type">i32</span>| &#123; <span class="keyword">move</span> |i: <span class="type">i32</span>| &#123; n += i; n &#125; &#125;;</span><br></pre></td></tr></table></figure>
+
+<h1 id="获胜者是？"><a href="#获胜者是？" class="headerlink" title="获胜者是？"></a>获胜者是？</h1><p>显然，这个玩具需求的目的就是为了测试不同语言的能力，选出一个获胜者是必须的。但我不想把事情说得太绝对，毕竟不同的编程语言是为不同场景而生的。就上面的比拼来看，Go 显然比 Java 要好，但我对 Go 的好感要远低于 Java，这背后的原因以后再细谈。</p>
+<p>foo 函数的编写需要语言在两个方面的基本支持：嵌套函数捕获外部变量（词法作用域&#x2F;闭包）和修改外部状态。显然我们的获胜者是 Scheme&#x2F;Racket, Common Lisp 和 Arc！其次是 JavaScript 和 Ruby！接下来，Perl 5, Go, Rust 和 C# 也能很好地完成任务！Smalltalk, Python, Kotlin, Clojure 虽然需要手动捕获变量，但勉强能实现需求。C&#x2F;C++ 本体感到吃力，只能依靠 Clang 提供的 Blocks 扩展。垫底选手是 Java, 什么样的黑魔法都拯救不了它不能返回函数的特性。</p>
+<p>（如果你喜欢本文，请出门扫码献爱心。本文定价2元）</p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>本人的博客供免费阅览，读者如果喜欢的话，可以自愿付款。每篇博文下都会有定价作为付款金额参考。付款金额无下限，有上限。对于定价为 a 元的文章，无论你多么喜欢，请不要支付超过 a*10 元。</div>
+  <button>
+    打赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/IMG_0142.JPG" alt="Milky Natas (a.k.a. 布丁大魔王) 支付宝">
+        <span>支付宝</span>
+      </div>
+      <div>
+        <img src="/images/IMG_0141.JPG" alt="Milky Natas (a.k.a. 布丁大魔王) 微信">
+        <span>微信</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/programming-language/" rel="tag"># programming-language</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/%E5%80%BC%E5%92%8C%E5%BC%95%E7%94%A8%E5%88%9D%E6%AD%A5%E8%A7%A3%E9%87%8A/" rel="prev" title="值和引用初步解释">
+                  <i class="fa fa-angle-left"></i> 值和引用初步解释
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/Y-Combinator%E7%AE%80%E4%BB%8B/" rel="next" title="Y-Combinator简介">
+                  Y-Combinator简介 <i class="fa fa-angle-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+  <div class="copyright">
+    &copy; 
+    <span itemprop="copyrightYear">2025</span>
+    <span class="with-love">
+      <i class="fa fa-heart"></i>
+    </span>
+    <span class="author" itemprop="copyrightHolder">Milky Natas (a.k.a. 布丁大魔王)</span>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+  <div class="sidebar-dimmer"></div>
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+</body>
+</html>
