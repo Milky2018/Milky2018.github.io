@@ -1,0 +1,746 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pincer · 时间实验室</title>
+<style>
+  :root { color-scheme: dark; font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #111416; color: #e1e4e5; --accent: #edaa77; --accent-rgb: 237,170,119; --edge: #303638; --muted: #8b979c; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px 32px; max-width: 1440px; margin-inline: auto; }
+  body[data-direction="reverse"] { --accent: #82c6cc; --accent-rgb: 130,198,204; }
+  button, input { font: inherit; }
+  button { border: 1px solid #394044; border-radius: 6px; background: #242a2e; color: #d9dfe1; padding: 9px 12px; cursor: pointer; }
+  button:hover:not(:disabled) { border-color: #9aa4a8; background: #30383d; }
+  button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  button:disabled { opacity: .32; cursor: default; }
+  button[aria-selected="true"] { background: #354044; color: #fff; border-color: #66787e; }
+  h1, h2, p { margin: 0; } h2 { font-size: 14px; font-weight: 550; }
+  .muted { color: var(--muted); }
+  .eyebrow { font: 10px/1.4 ui-monospace, SFMono-Regular, monospace; letter-spacing: 1.8px; color: #839198; }
+  .masthead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 23px; }
+  .brand { display: flex; align-items: center; gap: 14px; }
+  .brand-mark { width: 31px; height: 31px; position: relative; border-left: 3px solid #e6a16f; border-right: 3px solid #83bdc5; transform: skewY(-15deg); }
+  .brand-mark::after { content: ''; position: absolute; inset: 8px 3px; border-top: 2px solid #c5cece; border-bottom: 2px solid #c5cece; }
+  h1 { font-size: 24px; font-weight: 650; letter-spacing: 6px; line-height: 1.2; }
+  .prototype-label { border: 1px solid #343c40; border-radius: 4px; padding: 6px 9px; font: 10px ui-monospace, monospace; letter-spacing: 1.4px; color: #a3afb4; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 18px; align-items: start; }
+  .stage { border: 1px solid #3a4246; background: #191f22; border-radius: 9px; overflow: hidden; }
+  .stage-header { min-height: 54px; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #333c40; background: #20272b; }
+  .mode-badge { font: 10px ui-monospace, monospace; letter-spacing: 1px; color: var(--accent); display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .mode-badge::before { content: ''; height: 5px; width: 5px; background: currentColor; border-radius: 50%; }
+  .scene { position: relative; display: flex; align-items: center; justify-content: center; padding: 22px 22px 18px; background: radial-gradient(ellipse at 55% 45%, #283239 0, #1a2227 55%, #151b1f 100%); }
+  #board { display: grid; grid-template-columns: repeat(6, 1fr); grid-template-rows: repeat(6, 1fr); position: relative; width: min(100%, max(220px, calc(100svh - 390px))); min-width: 0; max-width: 480px; aspect-ratio: 1; border: 1px solid #59666d; box-shadow: 0 12px 32px #0008, 0 0 0 5px #10181d, 0 0 0 6px #39454b; isolation: isolate; outline: none; }
+  .cell { min-width: 0; min-height: 0; position: relative; display: flex; align-items: center; justify-content: center; background: #38454c; border-right: 1px solid #ffffff07; border-bottom: 1px solid #0002; }
+  .cell:nth-child(3n) { background-color: #3a474e; }
+  .wall { background: linear-gradient(180deg, #6c7b81 0%, #4b5b63 12%, #37454d 75%, #25323a 76%) !important; border: 1px solid #28343b; box-shadow: inset 0 1px #94a0a44d, inset 1px 0 #83939b33, 0 6px 8px #0004; z-index: 2; }
+  .wall.edge-side { background: linear-gradient(90deg, #55656e, #3b4c55 70%, #293840 72%) !important; }
+  .wall.edge-bottom { background: linear-gradient(180deg, #78868c, #56666f 26%, #3d4b54 28%, #303c44) !important; }
+  .wall::after { content: ''; position: absolute; width: 4px; height: 4px; border-radius: 50%; background: #26333b; box-shadow: 0 1px #a3afb533; top: 15%; left: 16%; }
+  .gate { background: #232e35 !important; border: 0; z-index: 3; }
+  .gate::before { content: ''; position: absolute; inset: 7% 0; background: repeating-linear-gradient(45deg, #af9466 0 4px, #2c3436 4px 8px); border-top: 2px solid #88908c; border-bottom: 2px solid #88908c; box-shadow: 0 5px 7px #0007; }
+  .gate::after { content: ''; position: absolute; bottom: -26%; left: 40%; color: #e3c8a8; font: 9px ui-monospace, monospace; z-index: 1; }
+  .gate[data-side="B"]::after { color: #c3e7e8; }
+  .gate-chamber { position: absolute; inset: 16% 5%; background: linear-gradient(90deg, #583f34, #77523f 55%, #453b36); border: 2px solid #a6aaa6; border-radius: 50% 8% 8% 50%; box-shadow: inset 0 0 0 3px #283137, inset 0 0 12px #e4a16a40; }
+  .gate[data-side="B"] .gate-chamber { background: linear-gradient(90deg, #35494d, #42676b 55%, #344b50); border-radius: 8% 50% 50% 8%; }
+  .gate-chamber::after { content: ''; position: absolute; height: 90%; width: 10%; left: 48%; top: 5%; background: #bac4c0; box-shadow: 0 0 0 1px #1c2a31, 0 0 7px #c4e6dc40; transform: rotate(-26deg); }
+  .actor { width: 84%; height: 84%; position: relative; display: block; z-index: 5; color: #e9a070; filter: drop-shadow(2px 4px 2px #0a131aaa); }
+  .actor.reverse { color: #82c6cc; }
+  .actor svg { width: 100%; height: 100%; overflow: visible; }
+  .actor.echo { opacity: .78; }
+  .actor.active::before { content: ''; position: absolute; inset: -3%; border: 1px solid currentColor; border-radius: 50%; box-shadow: 0 0 10px currentColor; opacity: .7; }
+  .actor-id { position: absolute; left: 80%; top: -3%; color: #dde6e9; background: #172027; border: 1px solid #6b7b83; border-radius: 2px; padding: 1px 3px; font: 8px ui-monospace, monospace; white-space: nowrap; }
+  .stage-footer { border-top: 1px solid #303b42; padding: 10px 17px; display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 10px; color: #8f9fa6; background: #192126; }
+  .legend { display: flex; gap: 14px; } .legend span { display: flex; align-items: center; gap: 6px; }
+  .legend b { font-weight: 400; }
+  .legend i { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .legend .past { background: #7a929b; opacity: .6; }
+  .aside-card { padding: 18px; background: #1b2226; border: 1px solid #333e44; border-radius: 8px; }
+  #time { font: 300 48px/1 ui-monospace, SFMono-Regular, monospace; color: #e6ebed; letter-spacing: -3px; }
+  #direction { color: var(--accent); font-size: 12px; font-weight: 500; }
+  .mini-stats { display: flex; justify-content: space-between; padding-block: 12px; border-top: 1px solid #364047; font-size: 11px; color: #899ba4; }
+  #segment, #undo-count { color: #dae0e3; font: 11px ui-monospace, monospace; }
+  kbd { font: 10px/1.5 ui-monospace, monospace; padding: 2px 5px; border: 1px solid #79858b55; border-bottom-width: 2px; border-radius: 3px; color: inherit; }
+  .action-row { display: flex; gap: 7px; margin-top: 8px; }
+  .action-row button { flex: 1; font-size: 11px; display: flex; justify-content: space-between; align-items: center; }
+  .control-block { display: flex; gap: 16px; align-items: center; margin: 19px 0 0; }
+  .dpad { display: grid; grid-template-columns: repeat(3, 29px); gap: 3px; }
+  .dpad button { padding: 3px 0; height: 28px; font: 14px/1 ui-monospace, monospace; border-radius: 3px; }
+  .dpad [data-action="up"] { grid-area: 1 / 2; }
+  .dpad [data-action="left"] { grid-area: 2 / 1; }
+  .dpad [data-action="wait"] { grid-area: 2 / 2; }
+  .dpad [data-action="right"] { grid-area: 2 / 3; }
+  .dpad [data-action="down"] { grid-area: 3 / 2; }
+  .timeline { margin-top: 13px; padding: 14px 17px; border: 1px solid #333e44; border-radius: 8px; background: #1a2125; }
+  .timeline-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .replay-actions { display: flex; gap: 5px; }
+  .replay-actions button { font-size: 10px; padding: 4px 8px; border-radius: 4px; }
+  .timeline-foot { display: flex; justify-content: space-between; align-items: center; font-size: 10px; color: #8fa5af; }
+  details { margin-top: 14px; border-top: 1px solid #303a40; padding-top: 13px; font-size: 11px; color: #98a9b2; }
+  summary { cursor: pointer; }
+  dl { margin-top: 12px; font-size: 11px; } dt { color: #7d939f; } dd { margin: 2px 0 10px; overflow-wrap: anywhere; }
+  pre { overflow: auto; max-height: 210px; font: 9px/1.5 ui-monospace, monospace; } #ascii { font-size: 11px; white-space: pre; }
+  body[data-mode="replay"] .stage-header { background: #29323b; }
+  body[data-mode="replay"] .mode-badge { color: #c9d9e4; }
+  body[data-mode="replay"][data-axis="world"] .legend i { background: #edaa77; }
+  body[data-mode="replay"][data-axis="world"] .legend .past { background: #82c6cc; opacity: 1; }
+  @media (min-height: 850px) { .scene { padding-block: 32px; } }
+  @media (max-height: 800px) and (min-width: 651px) { body { padding-block: 18px; } .masthead { margin-bottom: 18px; } }
+  @media (max-width: 900px) { body { padding: 18px; } .layout { grid-template-columns: minmax(0, 1fr) 230px; gap: 12px; } .aside-card { padding: 14px; } .scene { padding: 20px 12px; } #board { min-width: 0; } .legend { gap: 8px; } }
+  @media (max-width: 650px) { body { padding: 16px 12px; } .masthead { margin-bottom: 16px; } .prototype-label { font-size: 8px; } .layout { grid-template-columns: 1fr; } .scene { padding: 20px 12px; } #board { width: 100%; } .aside-card { padding: 15px; } #time { font-size: 36px; } .stage-footer { padding: 10px; font-size: 9px; } .timeline { padding: 12px; } .control-block { margin-top: 12px; } }
+
+  .clocks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+  .clocks > div + div { padding-left: 14px; border-left: 1px solid #364047; }
+  .clock-label { display: block; font-size: 10px; color: #8c9fa9; margin-bottom: 4px; }
+  #personal-time { display: block; font: 300 40px/1.3 ui-monospace, monospace; color: var(--accent); letter-spacing: -2px; }
+  #time { display: block; font-size: 40px; line-height: 1.3; }
+  #personal-time.multiple { font-size: 18px; letter-spacing: 0; line-height: 2.9; overflow-wrap: anywhere; }
+  .direction-line { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin: 8px 0 14px; }
+  .axis-tabs { display: flex; gap: 4px; }
+  .axis-tabs button { font-size: 10px; padding: 5px 8px; }
+  .timeline-caption { display: flex; justify-content: space-between; align-items: center; color: #8fa5af; font-size: 10px; }
+  .timeline-caption strong, #world-label { font: 10px ui-monospace, monospace; color: #dce5e9; }
+  .timeline-plot { position: relative; margin: 5px 12px 3px; }
+  #fold-chart { height: 88px; outline-offset: 3px; cursor: pointer; touch-action: none; }
+  #fold-chart:focus-visible { outline: 1px solid #8fa5af; }
+  #fold-chart svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .world-track { position: relative; height: 35px; }
+  #world-axis { display: block; width: 100%; height: 35px; overflow: visible; }
+  #world-slider { position: absolute; left: -6px; top: 0; width: calc(100% + 12px); height: 24px; margin: 0; padding: 0; appearance: none; background: transparent; cursor: pointer; }
+  #world-slider::-webkit-slider-runnable-track { height: 2px; background: transparent; }
+  #world-slider::-webkit-slider-thumb { appearance: none; width: 12px; height: 12px; margin-top: -5px; border: 2px solid #dce9e9; border-radius: 50%; background: #263c44; }
+  #world-slider:focus-visible { outline: none; }
+  #world-slider:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px #82c6cc66; }
+  #world-slider::-moz-range-track { height: 2px; background: transparent; }
+  #world-slider::-moz-range-thumb { width: 8px; height: 8px; border: 2px solid #dce9e9; border-radius: 50%; background: #263c44; }
+  #world-slider:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px #82c6cc66; }
+  #timeline-conflicts { position: absolute; inset: 0 0 23px; pointer-events: none; }
+  .timeline-conflict { position: absolute; top: 0; bottom: 0; width: 28px; transform: translateX(-50%); padding: 0; border: 0; border-radius: 0; background: transparent; color: #f07878; pointer-events: auto; z-index: 2; }
+  .timeline-conflict::before { content: ''; position: absolute; top: 3px; bottom: 0; left: 50%; transform: translateX(-50%); border-left: 2px dashed currentColor; }
+  .timeline-conflict:hover:not(:disabled), .timeline-conflict:focus-visible { background: #ed777014; border: 0; color: #ffa2a2; }
+  .timeline-conflict:focus-visible { outline: 1px solid currentColor; outline-offset: 0; }
+  .conflict-label { position: absolute; top: 6px; left: 22px; padding: 5px 8px; border: 1px solid #b35757; border-radius: 4px; background: #291d21; font-size: 10px; white-space: nowrap; opacity: 0; pointer-events: none; }
+  .timeline-conflict:hover .conflict-label, .timeline-conflict:focus-visible .conflict-label { opacity: 1; }
+  .timeline-conflict.near-end .conflict-label { left: auto; right: 22px; }
+  #conflict-summary { color: #f07878; }
+  .cell.debt-conflict { outline: 3px solid #f07878; outline-offset: -3px; box-shadow: inset 0 0 18px #e75c5944; z-index: 6; }
+  .cell.conflict { animation: collision-flash .9s ease-out; }
+  @keyframes collision-flash { 0%, 40% { box-shadow: inset 0 0 0 2px #ed7770, inset 0 0 0 50px #d04c4944; } 100% { box-shadow: inset 0 0 0 2px transparent, inset 0 0 0 50px transparent; } }
+  @media (max-width: 650px) { .timeline-head { flex-wrap: wrap; } }
+  @media (max-height: 800px) and (min-width: 651px) { body { padding-block: 12px; } #fold-chart { height: 64px; } .timeline { padding-block: 8px; margin-top: 11px; } .timeline-head { margin-bottom: 6px; } }
+
+  [hidden] { display: none !important; }
+  body[data-ready="false"] .layout { display: none; }
+  .level-nav { display: flex; align-items: center; gap: 5px; }
+  .level-nav button { padding: 4px 9px; font: 11px ui-monospace, monospace; }
+  .level-nav button[aria-pressed="true"] { color: #f2f5f3; background: #46545b; border-color: #82979f; }
+  #level-complete { color: #a8e5d9; font-size: 20px; margin-left: 8px; }
+  #next-level { border-color: #82c6cc; color: #bce5e5; }
+  .stage.won { border-color: #82c6cc; box-shadow: 0 0 18px #82c6cc18; }
+  .stage-footer { justify-content: center; gap: 18px; }
+  .portal { --portal: #ee756b; background: #3b4549; overflow: visible; }
+  .portal.exit { --portal: #82c6cc; }
+  .portal::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle, var(--portal), transparent 70%); opacity: .18; }
+  .portal-ring { position: absolute; inset: 17%; border: 3px solid var(--portal); border-radius: 50%; box-shadow: 0 0 8px var(--portal), inset 0 0 6px var(--portal); }
+  .portal.inactive { --portal: #758087; }
+  .portal.inactive .portal-ring { box-shadow: none; }
+  .plate { position: absolute; inset: 13%; border: 3px solid var(--circuit); border-radius: 50%; background: #202a2e; box-shadow: 0 3px 0 #111c22; }
+  .plate.pressed { background: var(--circuit); box-shadow: 0 0 16px var(--circuit); transform: scale(.9); }
+  .circuit-id { position: absolute; top: 1%; right: 6%; font: 9px ui-monospace, monospace; color: var(--circuit); z-index: 6; }
+  .door-block { position: absolute; inset: 7% 9% 14%; border: 2px solid var(--circuit); border-top-width: 6px; border-radius: 3px; background: repeating-linear-gradient(135deg, #51605e 0 7px, #34423f 7px 14px); box-shadow: 2px 5px 0 #182621; z-index: 4; }
+  .door-block.open { inset: 17%; border: 1px dashed var(--circuit); background: transparent; box-shadow: none; opacity: .35; }
+  .door-block.unresolved { border-style: dashed; background: repeating-linear-gradient(135deg, #d8b77328 0 5px, transparent 5px 10px); box-shadow: none; opacity: .7; }
+  .masthead-actions { display: flex; align-items: center; gap: 10px; }
+  .masthead-actions button { padding: 6px 10px; font-size: 11px; }
+  #catalog-file { display: none; }
+  #level-buttons { display: flex; gap: 5px; flex-wrap: wrap; }
+  .editor-tools { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 14px 0; }
+  .editor-tools button { font-size: 11px; padding: 8px 5px; border-left: 3px solid var(--swatch, #53646d); }
+  .editor-tools button[aria-pressed="true"] { background: #46545b; border-color: #cbd9d8; }
+  .editor-fields { display: flex; gap: 8px; margin: 12px 0; align-items: center; flex-wrap: wrap; font-size: 11px; color: #9eafb8; }
+  .editor-fields input { width: 48px; padding: 5px; background: #111c22; color: #e1e4e5; border: 1px solid #4a5a63; border-radius: 4px; }
+  select { font: inherit; color: inherit; background: #242e34; border: 1px solid #53646d; border-radius: 4px; padding: 5px; }
+  .editor-actions { display: grid; gap: 7px; margin-top: 12px; }
+  .editor-actions button { font-size: 11px; }
+  #editor-status { margin-top: 12px; color: #a9c7bd; font-size: 11px; overflow-wrap: anywhere; }
+  #editor-status.error, #load-error { color: #eea69d; }
+  .editor-note { color: #8f9fa6; font-size: 11px; line-height: 1.8; }
+  body[data-editing="true"] #board { touch-action: none; user-select: none; cursor: crosshair; }
+  body[data-editing="true"] .cell:hover { outline: 2px solid #e7efdc; outline-offset: -2px; z-index: 7; }
+  body[data-editing="true"] .cell > * { pointer-events: none; }
+  body[data-editing="true"] .legend i { background: #edaa77; }
+  body[data-editing="true"] .legend .past { background: #82c6cc; opacity: 1; }
+  body[data-editing="true"] .timeline { display: none; }
+  body[data-editing="true"] #board { width: min(100%, max(250px, calc(100svh - 270px))); }
+  .keyboard { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; color: #9daeb6; font-size: 10px; }
+  .control-block { margin-top: 20px; }
+  .mini-stats { margin-top: 12px; }
+</style>
+<header class="masthead">
+  <div class="brand"><div class="brand-mark" aria-hidden="true"></div><div><h1>PINCER</h1></div></div>
+  <div class="masthead-actions"><button id="import-levels">导入 JSON</button><input id="catalog-file" type="file" accept=".json,application/json" aria-label="导入关卡 JSON"><button id="edit-toggle" disabled>关卡编辑器</button><span class="prototype-label" id="level-label">—</span></div>
+</header>
+<p id="load-error" role="alert" hidden></p>
+<div class="layout">
+  <main>
+    <section class="stage" id="stage">
+      <header class="stage-header"><div class="level-nav" aria-label="关卡"><span id="level-buttons"></span><span id="level-complete" aria-label="已通关" hidden>✓</span><button id="next-level" aria-label="下一关" hidden>→</button></div><span id="mode-badge" class="mode-badge">LIVE</span></header>
+      <div class="scene"><div id="board" role="img" tabindex="0" aria-label="关卡"></div></div>
+      <footer class="stage-footer"><div class="legend"><span><i></i><b id="legend-current">当前</b></span><span><i class="past"></i><b id="legend-past">过去</b></span></div></footer>
+    </section>
+    <section class="timeline" aria-label="双时间轴与回放">
+      <div class="timeline-head"><div class="axis-tabs" role="tablist" aria-label="Replay 时间基准"><button id="axis-world" role="tab" aria-selected="true">世界时间</button><button id="axis-personal" role="tab" aria-selected="false">主角时间</button></div><div class="replay-actions"><button id="replay">Replay</button><button id="play">▶</button><button id="resume">↩</button></div></div>
+      <div class="timeline-caption"><span>主角时间线</span><strong id="personal-label"></strong></div>
+      <div class="timeline-plot">
+        <div id="fold-chart" role="slider" tabindex="0" aria-label="主角时间线" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0"></div>
+        <div class="world-track"><svg id="world-axis" viewBox="0 0 600 35" preserveAspectRatio="none" aria-hidden="true"></svg><input id="world-slider" type="range" min="0" max="0" value="0" aria-label="世界时间光标"></div>
+        <div id="timeline-conflicts"></div>
+      </div>
+      <div class="timeline-foot"><label for="world-slider">世界时间 <strong id="world-label"></strong></label><span id="conflict-summary"></span></div>
+    </section>
+  </main>
+  <aside>
+    <section class="aside-card" id="play-card">
+      <div class="eyebrow">W / P</div>
+      <div class="clocks"><div><span class="clock-label">世界 W</span><strong id="time">00</strong></div><div><span class="clock-label">主角 P</span><strong id="personal-time">00</strong></div></div><div class="direction-line"><strong id="direction"></strong></div>
+      <div class="mini-stats"><span>当前段 <strong id="segment"></strong></span><span>Undo <strong id="undo-count"></strong></span></div>
+      <div class="action-row"><button id="undo" aria-label="撤销一步"><span>↶</span><kbd>Z</kbd></button><button id="reset" aria-label="重新开始"><span>↻</span><kbd>R</kbd></button></div>
+      <div class="control-block"><div class="dpad" aria-label="移动控制"><button class="up" data-action="up" aria-label="向上">↑</button><button data-action="left" aria-label="向左">←</button><button data-action="wait" aria-label="等待一拍">·</button><button data-action="right" aria-label="向右">→</button><button class="up" data-action="down" aria-label="向下">↓</button></div><div class="keyboard"><kbd>WASD</kbd><kbd>Space</kbd><kbd>Z</kbd></div></div>
+      <details><summary>AI 调试</summary><dl id="state-summary"></dl><pre id="ascii"></pre><pre id="debug"></pre></details>
+    </section>
+    <section class="aside-card" id="editor-card" hidden>
+      <div class="eyebrow">LEVEL EDITOR</div>
+      <div class="editor-fields"><label>宽 <input id="edit-width" aria-label="地图宽度" type="number" min="3" max="16"></label><label>高 <input id="edit-height" aria-label="地图高度" type="number" min="3" max="16"></label><button id="resize-level">调整</button></div>
+      <div class="editor-tools" id="editor-tools"></div>
+      <div class="editor-fields"><label>踏板 / 门配对 <select id="circuit-select" aria-label="踏板与门的配对"><option value="1">1 · 金</option><option value="2">2 · 绿</option><option value="3">3 · 紫</option><option value="4">4 · 粉</option></select></label></div>
+      <p class="editor-note">按住鼠标拖动绘制，右键擦成地面。相同编号的踏板控制对应的门。Entry、Exit 和两个倒转口各需一个。</p>
+      <div class="editor-actions"><button id="editor-undo">↶ 撤销绘制</button><button id="new-level">＋ 新关卡</button><button id="test-level">▶ 试玩</button><button id="save-levels">下载 levels.json</button></div>
+      <p id="editor-status" role="status"></p>
+    </section>
+    <section class="aside-card" id="test-card" hidden style="margin-top:12px"><button id="return-editor">返回编辑</button><p class="editor-note" style="margin-top:8px">正在试玩，修改仍保留在编辑器中。</p></section>
+  </aside>
+</div>
+
+<script id="preset-levels" type="application/json">
+{
+  "version": 1,
+  "levels": [
+    {
+      "rows": [
+        "######",
+        "#.##.#",
+        "E.AB.X",
+        "#.##.#",
+        "######"
+      ]
+    },
+    {
+      "rows": [
+        "######",
+        "#....#",
+        "E...A#",
+        "X...B#",
+        "#....#",
+        "######"
+      ]
+    },
+    {
+      "rows": [
+        "#######",
+        "####.##",
+        "E..a.A#",
+        "#######",
+        "X....B#",
+        "##1####",
+        "#######"
+      ]
+    }
+  ]
+}
+</script>
+
+<script id="temporal-engine">
+// DOM-free rules. Recorded selves determine plate occupancy at each world tick.
+globalThis.TemporalPrototype = (() => {
+  const levels = [], vectors = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0], wait: [0, 0] };
+  const copy = value => JSON.parse(JSON.stringify(value));
+  const same = (a, b) => a.x === b.x && a.y === b.y;
+  function configure(data) {
+    if (data?.version !== 1 || !Array.isArray(data.levels) || !data.levels.length) throw Error('需要 version: 1 和非空 levels 数组。');
+    const parsed = data.levels.map(({ rows }, i) => {
+      const error = text => { throw Error(`关卡 ${i + 1}：${text}`); };
+      if (!Array.isArray(rows) || rows.length < 3 || rows.length > 16 || !rows.every(r => typeof r === 'string')) error('高度须为 3–16 格。');
+      const width = rows[0].length;
+      if (width < 3 || width > 16 || rows.some(r => r.length !== width || /[^#.EXAB1234abcd]/.test(r))) error('需要等宽的 3–16 格地图，且只能使用编辑器支持的地形。');
+      const cells = rows.flatMap((row, y) => [...row].map((tile, x) => ({ tile, x, y })));
+      const locate = tile => {
+        const found = cells.filter(c => c.tile === tile);
+        const label = '1234'.includes(tile) ? `${tile} 号踏板` : 'abcd'.includes(tile) ? `${'abcd'.indexOf(tile) + 1} 号门` : { E: 'Entry', X: 'Exit', A: '红倒转口', B: '蓝倒转口' }[tile];
+        if (found.length !== 1) error(`需要且只能有一个 ${label}。`);
+        return { x: found[0].x, y: found[0].y };
+      };
+      const entry = locate('E'), exit = locate('X'), gate = [locate('A'), locate('B')], circuits = [];
+      for (let j = 0; j < 4; j++) {
+        const id = String(j + 1), door = 'abcd'[j];
+        if (cells.some(c => c.tile === id || c.tile === door)) circuits.push({ id, plate: locate(id), door: locate(door) });
+      }
+      return { id: i + 1, width, height: rows.length, rows: [...rows], entry, exit, gate, circuits };
+    });
+    levels.splice(0, levels.length, ...parsed);
+  }
+  const level = state => levels[state.levelId - 1];
+  const tileAt = (state, x, y) => level(state).rows[y]?.[x] ?? '#';
+  const wall = (state, x, y) => tileAt(state, x, y) === '#';
+  const frameAt = (leg, time) => leg.frames.find(f => f.time === time && f.visible !== false);
+  const fail = (state, message, cells = [], type = 'blocked') => ({ state, changed: false, message, blocked: { type, cells } });
+  function initial(levelId = 1) {
+    const entry = levels[levelId - 1].entry;
+    return { levelId, time: 0, personalTime: 0, direction: 1, player: { ...entry }, started: false, won: false,
+      legs: [{ id: 1, direction: 1, frames: [{ time: 0, personalTime: 0, ...entry, visible: true }] }] };
+  }
+  function selves(state, time = state.time, replay = false) {
+    return state.legs.flatMap((leg, i) => {
+      const frame = frameAt(leg, time);
+      return frame ? [{ id: leg.id, direction: leg.direction, ...frame, active: !replay && i === state.legs.length - 1 }] : [];
+    });
+  }
+  function occupancy(state) {
+    const occupied = new Set();
+    for (const leg of state.legs) for (const f of leg.frames) if (f.visible !== false) occupied.add(`${f.time}:${f.x},${f.y}`);
+    return occupied;
+  }
+  function doors(state, time = state.time) {
+    const occupied = occupancy(state), has = p => occupied.has(`${time}:${p.x},${p.y}`);
+    return level(state).circuits.map(c => ({ ...copy(c), pressed: has(c.plate), occupied: has(c.door), unresolved: has(c.door) && !has(c.plate) }));
+  }
+  function debts(state) {
+    const occupied = occupancy(state), result = new Map();
+    for (const leg of state.legs) for (const f of leg.frames) {
+      if (f.visible === false) continue;
+      const circuit = level(state).circuits.find(c => same(c.door, f));
+      if (circuit && !occupied.has(`${f.time}:${circuit.plate.x},${circuit.plate.y}`)) {
+        result.set(`${circuit.id}:${f.time}`, { ...copy(circuit), time: f.time });
+      }
+    }
+    return [...result.values()].sort((a, b) => a.time - b.time || a.id.localeCompare(b.id));
+  }
+  function reduce(state, action) {
+    const vector = vectors[action], config = level(state);
+    if (!vector) return fail(state, 'Unknown action.');
+    if (state.won) return fail(state, 'Level complete.');
+    if (!state.started && action === 'wait') return fail(state, 'Enter with a direction.');
+    const time = state.time + state.direction, personalTime = state.personalTime + 1;
+    const entry = { x: state.player.x + vector[0], y: state.player.y + vector[1] };
+    if (wall(state, entry.x, entry.y)) return fail(state, 'Wall.', [entry]);
+    const side = action === 'wait' ? -1 : config.gate.findIndex(p => same(p, entry));
+    if (side >= 0 && config.gate.some(p => same(p, state.player))) return fail(state, 'Leave the chamber before entering again.', [entry]);
+    const player = side < 0 ? entry : { ...config.gate[1 - side] };
+    for (const leg of state.legs.slice(0, -1)) {
+      const before = frameAt(leg, state.time), after = frameAt(leg, time);
+      if (after && (same(after, entry) || same(after, player))) return fail(state, `Collision with self ${leg.id} at W${time}.`, [entry, player, after], 'overlap');
+      if (before && after && same(before, entry) && same(after, state.player)) return fail(state, `Head-on crossing with self ${leg.id}.`, [entry, state.player], 'swap');
+    }
+    const next = copy(state);
+    next.time = time; next.personalTime = personalTime; next.player = player; next.started = true;
+    next.legs.at(-1).frames.push({ time, personalTime, ...entry, visible: true });
+    if (side >= 0) {
+      next.direction *= -1;
+      next.legs.push({ id: next.legs.length + 1, direction: next.direction, frames: [{ time, personalTime, ...player, visible: true }] });
+    }
+    const unresolved = debts(next), atExit = next.direction < 0 && time === 0 && same(player, config.exit);
+    next.won = atExit && unresolved.length === 0;
+    return { state: next, changed: true, blocked: null,
+      message: next.won ? 'Complete.' : atExit ? `Unfulfilled door visits: ${unresolved.length}.` : side >= 0 ? 'Invert.' : '' };
+  }
+  const maxTime = state => Math.max(...state.legs.flatMap(l => l.frames.map(f => f.time)));
+  const minTime = state => Math.min(...state.legs.flatMap(l => l.frames.map(f => f.time)));
+  function ascii(state, time = state.time, replay = false) {
+    const config = level(state), actors = selves(state, time, replay);
+    return Array.from({ length: config.height }, (_, y) => Array.from({ length: config.width }, (_, x) => {
+      const actor = actors.find(a => a.x === x && a.y === y);
+      if (actor) return actor.active ? '@' : String(actor.id % 10);
+      return wall(state, x, y) ? '#' : tileAt(state, x, y);
+    }).join('')).join('\n');
+  }
+  return { configure, initial, reduce, selves, doors, debts, ascii, minTime, maxTime, levels, level, tileAt, wall, copy };
+})();
+</script>
+<script>
+(() => {
+  const engine = TemporalPrototype, $ = id => document.getElementById(id);
+  let state = null, history = [], mode = 'live', replayAxis = 'world', cursor = 0, timer = null, blocked = null;
+  let message = '', catalog = null, editorOpen = false, editing = false, selectedLevel = 1, tool = '#', circuit = '1';
+  let editorHistory = [], dirty = false, editorMessage = '', editorError = false, stroke = null;
+  const colors = ['#dab779', '#8ac8a1', '#b6a2e0', '#df9eb7'];
+  const tools = [['#', '墙'], ['.', '地面'], ['E', 'Entry'], ['X', 'Exit'], ['A', '红倒转口'], ['B', '蓝倒转口'], ['plate', '踏板'], ['door', '门']];
+  const stop = () => { clearInterval(timer); timer = null; };
+  const recording = () => [...history, state];
+  const worldReplay = () => mode === 'replay' && replayAxis === 'world';
+  const replayMax = () => replayAxis === 'world' ? engine.maxTime(state) : state.personalTime;
+  const replayMin = () => replayAxis === 'world' ? engine.minTime(state) : 0;
+  function inspect() {
+    if (!state) return { status: 'no-catalog' };
+    const snapshot = mode === 'replay' && replayAxis === 'personal' ? recording()[cursor] : state;
+    const time = worldReplay() ? cursor : snapshot.time;
+    const personalTimes = worldReplay() ? recording().filter(s => s.time === time).map(s => s.personalTime) : [snapshot.personalTime];
+    const debts = engine.debts(snapshot), atExit = snapshot.direction < 0 && snapshot.time === 0 && snapshot.player.x === engine.level(snapshot).exit.x && snapshot.player.y === engine.level(snapshot).exit.y;
+    return { levelId: state.levelId, level: engine.copy(engine.level(state)), status: snapshot.won ? 'won' : atExit && debts.length ? 'unfulfilled' : snapshot.started ? 'playing' : 'ready',
+      portalsVisible: true, portalsActive: time === 0, doors: engine.doors(snapshot, time), debts, message, mode, replayAxis, cursor: mode === 'replay' ? cursor : null, time, worldTime: time,
+      personalTime: worldReplay() ? null : snapshot.personalTime, personalTimes,
+      direction: snapshot.direction, player: worldReplay() ? null : { ...snapshot.player },
+      undoDepth: history.length, replayMin: replayMin(), replayMax: replayMax(), worldMin: engine.minTime(state), worldMax: engine.maxTime(state), personalMax: state.personalTime,
+      live: { worldTime: state.time, personalTime: state.personalTime, direction: state.direction, player: { ...state.player }, won: state.won, started: state.started },
+      selves: engine.selves(snapshot, time, worldReplay()), ascii: engine.ascii(snapshot, time, worldReplay()),
+      conflictsAtTime: engine.copy(debts.filter(d => d.time === time)), blocked: engine.copy(blocked), state: engine.copy(snapshot), editor: editorInspect() };
+  }
+  function drawFold(view) {
+    const frames = recording(), spanW = Math.max(1, view.worldMax - view.worldMin), rows = Math.max(1, state.legs.length - 1);
+    const x = time => (time - view.worldMin) / spanW * 600, rowY = row => 12 + row / rows * 60;
+    const y = snapshot => rowY(snapshot.legs.length - 1);
+    let svg = '<svg viewBox="0 0 600 84" preserveAspectRatio="none" aria-hidden="true">';
+    if (view.worldMin < 0) svg += `<path d="M${x(0)} 4V80" stroke="#647984" stroke-width=".7" stroke-dasharray="1 4"/>`;
+    if (worldReplay()) svg += `<path d="M${x(view.time)} 4V80" stroke="#e0e9ed" stroke-width="1" stroke-dasharray="2 3"/>`;
+    for (let i = 1; i < frames.length; i++) {
+      const a = frames[i - 1], b = frames[i], color = a.direction > 0 ? '#edaa77' : '#82c6cc';
+      svg += `<path d="M${x(a.time)} ${y(a)}H${x(b.time)}V${y(b)}" stroke="${color}" stroke-width="2" fill="none" opacity="${!worldReplay() && b.personalTime > view.personalTime ? .22 : 1}"/>`;
+      if (a.direction !== b.direction) svg += `<circle cx="${x(b.time)}" cy="${y(b)}" r="3" fill="#d6e0e4"/>`;
+    }
+    const highlighted = worldReplay() ? view.selves.map(a => ({ time: a.time, row: a.id - 1 })) : [{ time: view.time, row: view.state.legs.length - 1 }];
+    for (const f of highlighted) svg += `<circle cx="${x(f.time)}" cy="${rowY(f.row)}" r="4" fill="#18252c" stroke="#f0f4ee" stroke-width="1.5"/>`;
+    $('fold-chart').innerHTML = svg + '</svg>';
+    $('fold-chart').setAttribute('aria-valuemax', state.personalTime);
+    $('fold-chart').setAttribute('aria-valuenow', view.personalTime ?? view.personalTimes.at(-1) ?? 0);
+    $('fold-chart').setAttribute('aria-valuetext', `主角 P${view.personalTimes.join('/')}，世界 W${view.time}`);
+
+    const conflicts = new Map();
+    for (const debt of view.debts) {
+      if (!conflicts.has(debt.time)) conflicts.set(debt.time, []);
+      conflicts.get(debt.time).push(debt);
+    }
+    const ticks = new Set([view.worldMin, view.worldMax]);
+    const stride = Math.max(1, Math.ceil((view.worldMax - view.worldMin) / 8));
+    for (let t = Math.ceil(view.worldMin / stride) * stride; t <= view.worldMax; t += stride) ticks.add(t);
+    if (view.worldMin <= 0 && view.worldMax >= 0) ticks.add(0);
+    for (const time of conflicts.keys()) ticks.add(time);
+    let axis = '<path d="M0 12H600" stroke="#647984" stroke-width="1.5"/>';
+    for (const time of [...ticks].sort((a, b) => a - b)) {
+      const at = x(time), color = conflicts.has(time) ? '#f07878' : '#8fa5af';
+      axis += `<path d="M${at} 8V16" stroke="${color}"/><text x="${at}" y="32" text-anchor="${at === 0 ? 'start' : at === 600 ? 'end' : 'middle'}" fill="${color}" font-size="10" font-family="monospace">${time}</text>`;
+    }
+    $('world-axis').innerHTML = axis;
+    $('timeline-conflicts').replaceChildren();
+    const conflictTimes = [...conflicts.keys()];
+    for (const [time, debts] of conflicts) {
+      const button = document.createElement('button'), percent = x(time) / 6;
+      const index = conflictTimes.indexOf(time), gap = Math.min(time - (conflictTimes[index - 1] ?? time - spanW), (conflictTimes[index + 1] ?? time + spanW) - time);
+      const names = debts.map(d => `门 ${d.id}`).join('、'), detail = `W${time}：${names}未兑现，缺少同时踩下的踏板`;
+      button.className = `timeline-conflict${percent > 60 ? ' near-end' : ''}`; button.style.left = `${percent}%`;
+      button.style.width = `max(2px, min(28px, ${gap / spanW * 100}%))`;
+      button.dataset.time = time; button.title = detail; button.setAttribute('aria-label', detail);
+      const label = document.createElement('span'); label.className = 'conflict-label'; label.textContent = `W${time} · ${names}未兑现`; button.append(label);
+      button.onclick = () => {
+        if (mode === 'replay' && replayAxis === 'personal') {
+          const target = recording().slice(0, view.personalTime + 1).filter(s => s.time === time).at(-1);
+          replay(target.personalTime, 'personal');
+        } else replay(time, 'world');
+      };
+      $('timeline-conflicts').append(button);
+    }
+    $('conflict-summary').textContent = view.debts.length ? `${view.debts.length} 处未兑现` : '';
+  }
+  function render() {
+    chrome();
+    if (editing) { renderEditor(); return; }
+    const view = inspect(), config = engine.level(state);
+    $('time').textContent = String(view.time).padStart(2, '0');
+    $('personal-time').textContent = view.personalTimes.length > 3 ? `${view.personalTimes.slice(0, 2).join(' · ')} +${view.personalTimes.length - 2}` : view.personalTimes.map(t => String(t).padStart(2, '0')).join(' · ');
+    $('personal-time').className = view.personalTimes.length > 1 ? 'multiple' : '';
+    $('personal-time').title = view.personalTimes.map(t => `P${t}`).join(' / ');
+    document.body.dataset.direction = view.direction < 0 ? 'reverse' : 'forward';
+    document.body.dataset.mode = mode; document.body.dataset.axis = replayAxis;
+    $('mode-badge').textContent = mode === 'live' ? 'LIVE' : worldReplay() ? 'W REPLAY' : 'P REPLAY';
+    $('legend-current').textContent = worldReplay() ? '正向' : '当前';
+    $('legend-past').textContent = worldReplay() ? '逆向' : '过去';
+    $('direction').textContent = worldReplay() ? 'W →' : view.direction > 0 ? '→' : '←';
+    $('segment').textContent = worldReplay() ? '—' : `#${String(view.state.legs.length).padStart(2, '0')}`;
+    $('undo-count').textContent = history.length;
+    const completed = mode === 'live' && state.won;
+    $('stage').className = completed ? 'stage won' : 'stage';
+    $('level-complete').hidden = !completed;
+    $('next-level').hidden = !completed || state.levelId === engine.levels.length;
+    paintBoard(config, view.time, view.selves, view.doors, view.state);
+    $('board').setAttribute('aria-label', `关卡 ${state.levelId}，世界 W${view.time}，主角 P${view.personalTimes.join('/')}，${view.selves.length} 个人物，${view.debts.length} 个待兑现时刻。`);
+    $('undo').disabled = history.length === 0;
+    document.querySelectorAll('[data-action]').forEach(b => b.disabled = mode !== 'live' || state.won);
+    $('resume').disabled = mode === 'live'; $('play').disabled = replayMax() === replayMin(); $('play').textContent = timer ? 'Ⅱ' : '▶';
+    $('play').setAttribute('aria-label', timer ? '暂停回放' : '播放回放'); $('resume').setAttribute('aria-label', '返回游玩');
+    $('world-slider').min = view.worldMin; $('world-slider').max = view.worldMax; $('world-slider').value = view.time;
+    $('world-label').textContent = `W${view.time}`;
+    $('personal-label').textContent = worldReplay() ? view.personalTimes.map(p => `P${p}`).join(' · ') : `P${view.personalTime} / ${state.personalTime}`;
+    $('axis-world').setAttribute('aria-selected', String(replayAxis === 'world')); $('axis-personal').setAttribute('aria-selected', String(replayAxis === 'personal'));
+    drawFold(view);
+    const entries = [['Level', String(state.levelId)], ['Status', view.status], ['Action', message], ['Clocks', `W${view.time} / P${view.personalTimes.join(', P')}`],
+      ['Selves', view.selves.map(a => `#${a.id} (${a.x}, ${a.y}) · P${a.personalTime}`).join('; ')], ['Door debts', JSON.stringify(view.debts)]];
+    $('state-summary').replaceChildren();
+    for (const [key, value] of entries) { const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = key; dd.textContent = value; $('state-summary').append(dt, dd); }
+    $('ascii').textContent = view.ascii; $('debug').textContent = JSON.stringify(view, null, 2);
+  }
+
+  function paintBoard(config, time, actors = [], doorStates = [], snapshot = state) {
+    const board = $('board'); board.replaceChildren();
+    board.style.gridTemplateColumns = `repeat(${config.width}, 1fr)`;
+    board.style.gridTemplateRows = `repeat(${config.height}, 1fr)`;
+    board.style.aspectRatio = `${config.width} / ${config.height}`;
+    board.style.width = `min(100%, calc(max(220px, 100svh - ${editing ? 270 : 390}px) * ${config.width / config.height}))`;
+    for (let y = 0; y < config.height; y++) for (let x = 0; x < config.width; x++) {
+      const tile = config.rows[y][x], cell = document.createElement('div');
+      const isWall = tile === '#';
+      const portal = tile === 'E' || tile === 'X', gate = tile === 'A' || tile === 'B';
+      cell.className = `cell${isWall ? ' wall' : ''}${isWall && (x === 0 || x === config.width - 1) ? ' edge-side' : ''}${isWall && y === config.height - 1 ? ' edge-bottom' : ''}${gate ? ' gate' : ''}${portal ? tile === 'E' ? ' portal' : ' portal exit' : ''}${portal && !editing && time !== 0 ? ' inactive' : ''}${!editing && blocked?.cells.some(p => p.x === x && p.y === y) ? ' conflict' : ''}`;
+      if (!editing && doorStates.some(d => d.unresolved && d.door.x === x && d.door.y === y)) cell.classList.add('debt-conflict');
+      cell.dataset.x = x; cell.dataset.y = y; cell.dataset.tile = tile;
+      if (portal) { cell.innerHTML = '<span class="portal-ring" aria-hidden="true"></span>'; cell.setAttribute('aria-label', tile === 'E' ? 'Entry' : 'Exit'); }
+      if (gate) { cell.dataset.side = tile; cell.innerHTML = '<span class="gate-chamber"></span>'; }
+      const plateId = '1234'.includes(tile) ? tile : null, doorId = 'abcd'.includes(tile) ? String('abcd'.indexOf(tile) + 1) : null;
+      const id = plateId || doorId, door = doorStates.find(d => d.id === id);
+      if (id) {
+        cell.style.setProperty('--circuit', colors[Number(id) - 1]);
+        const piece = document.createElement('span');
+        piece.className = plateId ? `plate${door?.pressed ? ' pressed' : ''}` : `door-block${door?.pressed ? ' open' : door?.unresolved ? ' unresolved' : ''}`;
+        if (doorId) { piece.dataset.door = id; piece.dataset.status = door?.pressed ? 'open' : door?.unresolved ? 'unresolved' : 'closed'; }
+        else { piece.dataset.plate = id; piece.dataset.pressed = String(!!door?.pressed); }
+        const label = document.createElement('span'); label.className = 'circuit-id'; label.textContent = id;
+        cell.append(piece, label);
+      }
+      const actor = actors.find(a => a.x === x && a.y === y);
+      if (actor) {
+        const marker = document.createElement('span');
+        marker.className = `actor${actor.active ? ' active' : !worldReplay() ? ' echo' : ''}${actor.direction < 0 ? ' reverse' : ''}`;
+        const leg = snapshot.legs.find(l => l.id === actor.id), index = leg.frames.findIndex(f => f.time === time);
+        let previous = leg.frames[index];
+        for (let i = index - 1; i >= 0; i--) { previous = leg.frames[i]; if (previous.x !== actor.x || previous.y !== actor.y) break; }
+        const dx = actor.x - previous.x, dy = actor.y - previous.y, angle = dx || dy ? Math.atan2(dy, dx) * 180 / Math.PI + 90 : 0;
+        marker.innerHTML = `<svg viewBox="0 0 64 64" aria-hidden="true"><g transform="rotate(${angle} 32 32)">
+          <ellipse cx="32" cy="37" rx="16" ry="18" fill="#101c24" opacity=".4"/>
+          <rect x="20" y="40" width="9" height="14" rx="4" fill="#17232c"/><rect x="35" y="40" width="9" height="14" rx="4" fill="#17232c"/>
+          <rect x="12" y="24" width="10" height="22" rx="5" fill="currentColor"/><rect x="42" y="24" width="10" height="22" rx="5" fill="currentColor"/>
+          <rect x="19" y="24" width="26" height="24" rx="9" fill="#d1d5cf" stroke="#23313a" stroke-width="2"/>
+          <rect x="26" y="31" width="12" height="15" rx="3" fill="${actor.active ? '#f3f1df' : '#879a9e'}" stroke="#53636b" stroke-width="1.5"/>
+          <circle cx="32" cy="20" r="13" fill="currentColor" stroke="#253640" stroke-width="2"/>
+          <path d="M22 18 Q32 11 42 18 L40 24 Q32 28 24 24Z" fill="#1c333e"/>
+          <path d="M26 18 Q32 15 38 18" fill="none" stroke="#d4eeeb" stroke-width="2" opacity=".7"/>
+        </g></svg><span class="actor-id">${String(actor.id).padStart(2, '0')}${actor.direction > 0 ? '→' : '←'}</span>`;
+        marker.title = `#${actor.id} · P${actor.personalTime}`;
+        cell.append(marker);
+      }
+
+      if (editing) { cell.setAttribute('role', 'gridcell'); cell.title = `${tile} (${x}, ${y})`; }
+      board.append(cell);
+    }
+    board.setAttribute('role', editing ? 'grid' : 'img');
+  }
+  function chrome() {
+    document.body.dataset.editing = String(editing);
+    $('editor-card').hidden = !editing; $('play-card').hidden = editing; $('test-card').hidden = !editorOpen || editing;
+    $('edit-toggle').textContent = editorOpen ? '关闭编辑器' : '关卡编辑器';
+    const id = editing ? selectedLevel : state.levelId;
+    $('level-label').textContent = `${String(id).padStart(2, '0')} / ${String(catalog.levels.length).padStart(2, '0')}`;
+    $('level-buttons').replaceChildren();
+    catalog.levels.forEach((_, i) => {
+      const b = document.createElement('button'); b.id = `level-${i + 1}`; b.textContent = String(i + 1).padStart(2, '0');
+      b.setAttribute('aria-label', `关卡 ${i + 1}`); b.setAttribute('aria-pressed', String(id === i + 1));
+      b.onclick = () => { if (editing) { selectedLevel = i + 1; editorMessage = ''; render(); } else loadLevel(i + 1); };
+      $('level-buttons').append(b);
+    });
+  }
+  function editorInspect() {
+    return { open: editorOpen, editing, selectedLevel, tool, circuit, dirty, message: editorMessage, undoDepth: editorHistory.length,
+      catalog: editing ? engine.copy(catalog) : undefined };
+  }
+  function editorStatus(text, error = false) { editorMessage = text; editorError = error; render(); }
+  function renderEditor() {
+    const rows = catalog.levels[selectedLevel - 1].rows;
+    $('stage').className = 'stage'; document.body.dataset.mode = 'edit';
+    $('legend-current').textContent = 'Entry'; $('legend-past').textContent = 'Exit';
+    paintBoard({ rows, width: rows[0].length, height: rows.length }, 0);
+    $('board').setAttribute('aria-label', `编辑关卡 ${selectedLevel}，${rows[0].length} × ${rows.length}`);
+    $('edit-width').value = rows[0].length; $('edit-height').value = rows.length;
+    $('mode-badge').textContent = 'EDIT'; $('level-complete').hidden = true; $('next-level').hidden = true;
+    $('editor-tools').replaceChildren();
+    for (const [value, label] of tools) {
+      const b = document.createElement('button'); b.dataset.tool = value; b.textContent = label;
+      b.setAttribute('aria-pressed', String(tool === value));
+      if (value === 'plate' || value === 'door') b.style.setProperty('--swatch', colors[Number(circuit) - 1]);
+      b.onclick = () => { tool = value; renderEditor(); }; $('editor-tools').append(b);
+    }
+    $('editor-undo').disabled = editorHistory.length === 0;
+    $('editor-status').className = editorError ? 'error' : '';
+    $('editor-status').textContent = editorMessage || (dirty ? '修改尚未下载。' : '拖动绘制；试玩不会丢失草稿。');
+    $('debug').textContent = JSON.stringify({ editor: editorInspect() }, null, 2);
+  }
+  function editSnapshot() { editorHistory.push({ catalog: engine.copy(catalog), selectedLevel, dirty }); }
+  function editorUndo() {
+    const previous = editorHistory.pop(); if (!previous) return;
+    catalog = previous.catalog; selectedLevel = previous.selectedLevel; dirty = previous.dirty;
+    editorMessage = ''; editorError = false; render();
+  }
+  function editCell(x, y, value) {
+    const rows = catalog.levels[selectedLevel - 1].rows;
+    if (!rows[y] || x < 0 || x >= rows[y].length || rows[y][x] === value) return;
+    if (value !== '#' && value !== '.') {
+      for (let j = 0; j < rows.length; j++) rows[j] = rows[j].replaceAll(value, '.');
+    }
+    rows[y] = rows[y].slice(0, x) + value + rows[y].slice(x + 1);
+    dirty = true; editorMessage = ''; editorError = false;
+  }
+  function paintAt(event) {
+    const cell = document.elementFromPoint(event.clientX, event.clientY)?.closest('.cell');
+    if (!cell || !$('board').contains(cell)) { stroke.last = null; return; }
+    const x = Number(cell.dataset.x), y = Number(cell.dataset.y), last = stroke.last || { x, y };
+    const steps = Math.max(Math.abs(x - last.x), Math.abs(y - last.y));
+    for (let i = 0; i <= steps; i++) editCell(Math.round(last.x + (x - last.x) * i / Math.max(1, steps)), Math.round(last.y + (y - last.y) * i / Math.max(1, steps)), stroke.value);
+    stroke.last = { x, y }; renderEditor();
+  }
+  $('board').oncontextmenu = event => { if (editing) event.preventDefault(); };
+  $('board').onpointerdown = event => {
+    if (!editing || ![0, 2].includes(event.button)) return;
+    event.preventDefault(); editSnapshot();
+    stroke = { value: event.button === 2 ? '.' : tool === 'plate' ? circuit : tool === 'door' ? 'abcd'[Number(circuit) - 1] : tool, last: null };
+    $('board').setPointerCapture(event.pointerId); paintAt(event);
+  };
+  $('board').onpointermove = event => { if (editing && stroke) paintAt(event); };
+  const endStroke = () => {
+    if (!stroke) return;
+    const previous = editorHistory.at(-1);
+    if (JSON.stringify(previous.catalog) === JSON.stringify(catalog)) editorHistory.pop();
+    stroke = null; renderEditor();
+  };
+  $('board').onpointerup = endStroke; $('board').onpointercancel = endStroke;
+  $('circuit-select').onchange = event => { circuit = event.target.value; renderEditor(); };
+  $('editor-undo').onclick = editorUndo;
+  $('resize-level').onclick = () => {
+    const width = Number($('edit-width').value), height = Number($('edit-height').value);
+    if (!Number.isInteger(width) || !Number.isInteger(height) || width < 3 || height < 3 || width > 16 || height > 16) { editorStatus('宽、高须为 3–16 的整数。', true); return; }
+    const rows = catalog.levels[selectedLevel - 1].rows;
+    if (width === rows[0].length && height === rows.length) return;
+    editSnapshot(); catalog.levels[selectedLevel - 1].rows = Array.from({ length: height }, (_, y) => Array.from({ length: width }, (_, x) => rows[y]?.[x] ?? '#').join(''));
+    dirty = true; editorMessage = ''; editorError = false; render();
+  };
+  $('new-level').onclick = () => {
+    editSnapshot(); catalog.levels.push({ rows: ['######', '#....#', 'E.AB.X', '#....#', '#....#', '######'] });
+    selectedLevel = catalog.levels.length; dirty = true; editorMessage = ''; editorError = false; render();
+  };
+  function startTest(closeEditor = false) {
+    try { engine.configure(catalog); }
+    catch (error) { editorStatus(error.message, true); return; }
+    editing = false; if (closeEditor) editorOpen = false;
+    loadLevel(selectedLevel);
+  }
+  $('edit-toggle').onclick = () => {
+    stop();
+    if (editorOpen) { startTest(true); return; }
+    editorOpen = true; editing = true; selectedLevel = state.levelId; render();
+  };
+  $('test-level').onclick = () => startTest();
+  $('return-editor').onclick = () => { stop(); editing = true; render(); };
+  $('save-levels').onclick = () => {
+    try { engine.configure(catalog); }
+    catch (error) { editorStatus(error.message, true); return; }
+    const blob = new Blob([JSON.stringify(catalog, null, 2) + '\n'], { type: 'application/json' });
+    const url = URL.createObjectURL(blob), link = document.createElement('a'); link.href = url; link.download = 'levels.json';
+    document.body.append(link); link.click(); link.remove(); URL.revokeObjectURL(url);
+    dirty = false; editorStatus('已发起 JSON 下载；请保留新文件，或用它替换原 levels.json。');
+  };
+  function openCatalog(data) {
+    engine.configure(data); stop(); catalog = engine.copy(data); dirty = false; editorHistory = []; editorMessage = ''; editorError = false;
+    editing = false; editorOpen = false; selectedLevel = 1; document.body.dataset.ready = 'true';
+    $('load-error').hidden = true; $('edit-toggle').disabled = false; loadLevel(1);
+  }
+  function step(action) {
+    if (editing || mode !== 'live') return { changed: false, message: 'Resume before moving.', view: inspect() };
+    const result = engine.reduce(state, action);
+    if (result.changed) { history.push(state); state = result.state; }
+    blocked = result.blocked; message = result.message; render();
+    return { changed: result.changed, message, view: inspect() };
+  }
+  function undo() {
+    stop(); mode = 'live'; blocked = null;
+    const changed = history.length > 0;
+    if (changed) state = history.pop();
+    message = changed ? 'Undo.' : 'At P0.';
+    render(); return { changed, view: inspect() };
+  }
+  function loadLevel(id) {
+    if (!engine.levels.some(l => l.id === id)) return inspect();
+    selectedLevel = id;
+    stop(); state = engine.initial(id); history = []; mode = 'live'; cursor = 0; blocked = null; message = '';
+    render(); return inspect();
+  }
+  function reset() { return loadLevel(state.levelId); }
+  function replay(value, axis = replayAxis) {
+    stop(); mode = 'replay'; blocked = null; replayAxis = axis === 'personal' ? 'personal' : 'world';
+    cursor = Math.max(replayMin(), Math.min(replayMax(), Math.trunc(Number(value ?? replayMin()) || 0)));
+    message = replayAxis === 'world' ? 'World replay.' : 'Personal replay.';
+    render(); return inspect();
+  }
+  function resume() { stop(); mode = 'live'; blocked = null; message = ''; render(); return inspect(); }
+  function selectAxis(axis) {
+    const view = inspect();
+    if (mode === 'replay') replay(axis === 'world' ? view.time : view.personalTime ?? view.personalTimes.at(-1) ?? 0, axis);
+    else { replayAxis = axis; render(); }
+  }
+  window.game = { step, undo, reset, loadLevel, inspect, replay, resume };
+  document.querySelectorAll('[data-action]').forEach(b => b.onclick = () => step(b.dataset.action));
+  $('next-level').onclick = () => loadLevel(state.levelId + 1);
+  $('undo').onclick = undo; $('reset').onclick = reset; $('replay').onclick = () => replay(); $('resume').onclick = resume;
+  $('axis-world').onclick = () => selectAxis('world'); $('axis-personal').onclick = () => selectAxis('personal');
+  $('world-slider').oninput = event => replay(event.target.value, 'world');
+  let foldDragging = false;
+  function seekPersonal(event) {
+    const rect = $('fold-chart').getBoundingClientRect(), view = inspect();
+    const world = view.worldMin + Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width)) * (view.worldMax - view.worldMin);
+    const row = Math.max(0, Math.min(state.legs.length - 1, Math.round(((event.clientY - rect.top) / rect.height * 84 - 12) / 60 * Math.max(1, state.legs.length - 1))));
+    const frame = state.legs[row].frames.reduce((a, b) => Math.abs(a.time - world) <= Math.abs(b.time - world) ? a : b);
+    replay(frame.personalTime, 'personal');
+  }
+  $('fold-chart').onpointerdown = event => {
+    if (event.button !== 0) return;
+    event.preventDefault(); foldDragging = true; $('fold-chart').focus({ preventScroll: true });
+    $('fold-chart').setPointerCapture(event.pointerId); seekPersonal(event);
+  };
+  $('fold-chart').onpointermove = event => { if (foldDragging) seekPersonal(event); };
+  $('fold-chart').onpointerup = () => { foldDragging = false; };
+  $('fold-chart').onpointercancel = () => { foldDragging = false; };
+  $('fold-chart').onkeydown = event => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault(); event.stopPropagation();
+    const view = inspect(), p = view.personalTime ?? view.personalTimes.at(-1) ?? 0;
+    replay(event.key === 'Home' ? 0 : event.key === 'End' ? state.personalTime : p + (event.key === 'ArrowRight' ? 1 : -1), 'personal');
+  };
+  $('play').onclick = () => {
+    if (timer) { stop(); render(); return; }
+    if (mode !== 'replay' || cursor >= replayMax()) replay();
+    timer = setInterval(() => { cursor++; if (cursor >= replayMax()) stop(); render(); }, 500); render();
+  };
+  document.addEventListener('keydown', event => {
+    const key = event.key.toLowerCase();
+    if (event.target.matches('input, textarea, select, [contenteditable="true"]')) return;
+    if (editing) { if (key === 'z' && !event.altKey && !event.shiftKey) { event.preventDefault(); editorUndo(); } return; }
+    if (!state) return;
+    if ((key === 'z' || (key === 'u' && !event.ctrlKey && !event.metaKey)) && !event.altKey && !event.shiftKey) { event.preventDefault(); undo(); return; }
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.target.matches('button, summary') && (key === ' ' || key === 'enter')) return;
+    const actions = { arrowup: 'up', w: 'up', arrowdown: 'down', s: 'down', arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right', ' ': 'wait' };
+    if (actions[key] || key === 'r') event.preventDefault();
+    if (key === 'r') reset(); else if (actions[key]) step(actions[key]);
+  });
+  $('import-levels').onclick = () => $('catalog-file').click();
+  $('catalog-file').onchange = async event => {
+    const file = event.target.files[0]; if (!file) return;
+    try { openCatalog(JSON.parse(await file.text())); }
+    catch (error) { $('load-error').hidden = false; $('load-error').textContent = `导入失败：${error.message}`; }
+    event.target.value = '';
+  };
+  openCatalog(JSON.parse($('preset-levels').textContent));
+})();
+</script>
+</html>
